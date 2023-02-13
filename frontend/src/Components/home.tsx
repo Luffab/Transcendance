@@ -81,24 +81,18 @@ const {socket} = useSelector((state: any) => ({
 		axios.post(url,{
 			"token": localStorage.getItem("token_transcandence"),
 			"sender_id": request
-		}
-		)
-		.then(res => {
-			if (res.data.status == "KO") {
-				setError(res.data.message)
-				toast.error(error, {
-					position: "bottom-right",
-					autoClose: 3000,
-					hideProgressBar: false,
-					closeOnClick: true,
-					pauseOnHover: true,
-					draggable: true,
-					progress: undefined,
-					theme: "light",
-					});
-			}
+		}).catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
-		.catch
 	}
 
 	function deleteWaitFriendsForBlock(request: string) {
@@ -257,23 +251,19 @@ const {socket} = useSelector((state: any) => ({
 		let url = 'http://'+ip+':3001/api/users/friends?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO") {
-				setError(res.data.message)
-				toast.error(error, {
-					position: "bottom-right",
-					autoClose: 3000,
-					hideProgressBar: false,
-					closeOnClick: true,
-					pauseOnHover: true,
-					draggable: true,
-					progress: undefined,
-					theme: "light",
-					});
-			}
-			else
-				setFriends(res.data.tab)
+			setFriends(res.data.tab)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -281,23 +271,19 @@ const {socket} = useSelector((state: any) => ({
 		let url = 'http://'+ip+':3001/api/game/private_game?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO") {
-				setError(res.data.message)
-				toast.error(error, {
-					position: "bottom-right",
-					autoClose: 3000,
-					hideProgressBar: false,
-					closeOnClick: true,
-					pauseOnHover: true,
-					draggable: true,
-					progress: undefined,
-					theme: "light",
-					});
-			}
-			else
-				setGame(res.data)
+			setGame(res.data)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -305,32 +291,21 @@ const {socket} = useSelector((state: any) => ({
 		let url = 'http://'+ip+':3001/api/users/wait_friends?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO") {
-				setError(res.data.message)
-				toast.error(error, {
-					position: "bottom-right",
-					autoClose: 3000,
-					hideProgressBar: false,
-					closeOnClick: true,
-					pauseOnHover: true,
-					draggable: true,
-					progress: undefined,
-					theme: "light",
-					});
-			}
-			else
-				setWaitFriends(res.data)
+			setWaitFriends(res.data)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
-
-	//function readFile(file) {
-	//	return new Promise((resolve, reject) => {
-	//	  let fr = new FileReader();
-	//	  fr.onload = x=> resolve(fr.result);
-	//	  fr.readAsText(file);
-	//  })}
 
 	const spectate = (id: string) => {
 		let game = {
@@ -345,7 +320,6 @@ const {socket} = useSelector((state: any) => ({
 	useEffect(() => {
 		getFriends(),
 		getWaitFriends()
-		//readFile("test.txt")
 		getGames()
 	}, [])
 
