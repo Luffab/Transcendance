@@ -1,0 +1,1 @@
+CREATE DATABASE FT_db;
