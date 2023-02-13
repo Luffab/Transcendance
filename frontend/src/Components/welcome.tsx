@@ -84,13 +84,30 @@ const {ip} = useSelector((state: any) => ({
     )
     .then(response => {
       setCode_tfa("")
-      dispatch(
-        {
-          type:"TOKEN",
-          token: response.data.token
-        })
-        localStorage.setItem("token_transcandence", response.data.token)
-      navigate("/home")
+      if (response.data.status == "KO")
+      {
+        toast.error(response.data.message, {
+          position: "bottom-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+          });
+      }
+      else if (response.data.status == "OK")
+      {
+        dispatch(
+          {
+            type:"TOKEN",
+            token: response.data.token
+          })
+          localStorage.setItem("token_transcandence", response.data.token)
+        navigate("/home")
+      }
+
     })
     .catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -107,6 +124,7 @@ const {ip} = useSelector((state: any) => ({
   }
 
   const send_recup_code = () => {
+    console.log("SEND_RECUP")
     let url='http://'+ip+':3001/api/auth/verify_code'
     let url2='http://'+ip+':3001/api/auth/2fa/recup'
     
@@ -114,6 +132,8 @@ const {ip} = useSelector((state: any) => ({
     axios.post(url2,{
       "token": token_tfa,
       "email": recup
+    }).then((data) => {
+      console.log(data)
     })
     .catch((error) =>{
 			toast.error(error.response.data.message, {

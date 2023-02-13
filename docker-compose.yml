@@ -20,7 +20,7 @@ services:
       - ADMINER_USERNAME=${POSTGRES_USER}
       - ADMINER_DB=${POSTGRES_DB}
     ports:
-      - "4000:4000"
+      - "8080:8080"
   back:
     build:
       context: ./backend
