@@ -149,7 +149,6 @@ export default function Groups_messages() {
 	}
 
 	const invite_to_game = (user_id: string) => {
-		console.log("INVITED", user_id)
 		let message = {
 			jwt: localStorage.getItem("token_transcandence"),
 			receiverId: user_id,

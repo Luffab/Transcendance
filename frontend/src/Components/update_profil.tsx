@@ -254,17 +254,13 @@ export default function Update_Profil() {
 	  };
 
 	  const handleFileUpload = async (e: any) => {
-		console.log(e.target.files[0].size)
 		if (e.target.files[0].size > 0)
 		{
 			const file = e.target.files[0];
 			let base64: any
 			base64 = await convertToBase64(file);
 			if (base64.length < MAXLENGTH_PICTURE)
-			{
-				console.log("CONVERT")
 				setAvatar(base64);
-			}
 		}
 	  };
 
