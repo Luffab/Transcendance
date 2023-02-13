@@ -12,6 +12,7 @@ import {
   import { useSelector, useDispatch } from 'react-redux';
   import jwt_decode from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import React from 'react'
 
@@ -91,11 +92,20 @@ export default function Profile() {
 			"block_id": id
 		}
 		)
-		.then(response => {
-			if (response.data.status === "OK")
-				setUsrBlock(false)
+		.then(() => {
+			setUsrBlock(false)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -132,12 +142,19 @@ export default function Profile() {
 		let url = 'http://'+ip+':3001/api/users/user_information?token='+localStorage.getItem("token_transcandence")+'&id='+id;
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO")
-				setError(res.data.message)
-			else
-				setUser_info(res.data)
+			setUser_info(res.data)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -145,12 +162,19 @@ export default function Profile() {
 		let url = 'http://'+ip+':3001/api/users/is_block?token='+localStorage.getItem("token_transcandence")+'&id='+id;
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO")
-				setError(res.data.message)
-			else
 			setUsrBlock(res.data)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -158,12 +182,19 @@ export default function Profile() {
 		let url = 'http://'+ip+':3001/api/users/get_game_history?token='+localStorage.getItem("token_transcandence")+'&id='+id;
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO")
-				setError(res.data.message)
-			else
-				setGameHistory(res.data)
+			setGameHistory(res.data)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -171,12 +202,19 @@ export default function Profile() {
 		let url = 'http://'+ip+':3001/api/users/is_friend?token='+localStorage.getItem("token_transcandence")+'&id='+id;
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO")
-				setError(res.data.message)
-			else
-				setUsrFriend(res.data)
+			setUsrFriend(res.data)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -184,12 +222,19 @@ export default function Profile() {
 		let url = 'http://'+ip+':3001/api/users/is_waiting_friend?token='+localStorage.getItem("token_transcandence")+'&id='+id;
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO")
-				setError(res.data.message)
-			else
-				setUsrWaitFriend(res.data)
+			setUsrWaitFriend(res.data)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 

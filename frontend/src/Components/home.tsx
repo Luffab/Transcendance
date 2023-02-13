@@ -81,7 +81,8 @@ const {socket} = useSelector((state: any) => ({
 		axios.post(url,{
 			"token": localStorage.getItem("token_transcandence"),
 			"sender_id": request
-		}).catch((error) =>{
+		})
+		.catch((error) =>{
 			toast.error(error.response.data.message, {
 				position: "bottom-right",
 				autoClose: 3000,

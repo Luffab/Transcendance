@@ -37,17 +37,25 @@ export default function Update_Profil() {
 		let url = 'http://'+ip+':3001/api/users/my_info?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO")
-				setUserError(res.data.message)
-			else {
-				setUsername(res.data.username);
-				setAvatar(res.data.avatar)
-				setTfa(res.data.is2fa)
-				setEmail(res.data.email)
-				if (res.data.email)
-					setIsMail(true)
-				setRecupEmail(res.data.recup_emails)
-			}
+			setUsername(res.data.username);
+			setAvatar(res.data.avatar)
+			setTfa(res.data.is2fa)
+			setEmail(res.data.email)
+			if (res.data.email)
+				setIsMail(true)
+			setRecupEmail(res.data.recup_emails)
+		})
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -55,12 +63,19 @@ export default function Update_Profil() {
 		let url = 'http://'+ip+':3001/api/users/blocked_users?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)
 		.then(res => {
-			if (res.data.status == "KO")
-				setUserError(res.data.message)
-			else
-				setBlocked(res.data)
+			setBlocked(res.data)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -83,10 +98,19 @@ export default function Update_Profil() {
 		}
 		)
 		.then(response => {
-			if (response.data.status === "OK")
-				deleteBlockedUser(user_id)
+			deleteBlockedUser(user_id)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -96,10 +120,18 @@ export default function Update_Profil() {
 		axios.post(url,{
 			"token": localStorage.getItem("token_transcandence"),
 			"username": username
-		}
-		)
-		.then(response => {})
-		.catch((error) => {
+		})
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -119,7 +151,17 @@ export default function Update_Profil() {
 			else
 				setIsMail(true)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -132,10 +174,19 @@ export default function Update_Profil() {
 		}
 		)
 		.then(response => {
-			console.log(post)
 			setAvatar(response.data.avatar)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -150,7 +201,17 @@ export default function Update_Profil() {
 		.then(response => {
 			setTfa(response.data.is2fa)
 		})
-		.catch((error) => {
+		.catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -206,7 +267,6 @@ export default function Update_Profil() {
 			}
 		}
 	  };
-
 
 	  useEffect(() => {
 		user(),

@@ -84,34 +84,26 @@ const {ip} = useSelector((state: any) => ({
     )
     .then(response => {
       setCode_tfa("")
-      if (response.data.status == "KO")
-      {
-        toast.error(response.data.message, {
-          position: "bottom-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-          });
-      }
-      else if (response.data.status == "OK")
-      {
-        dispatch(
-          {
-            type:"TOKEN",
-            token: response.data.token
-          })
-          localStorage.setItem("token_transcandence", response.data.token)
-        navigate("/home")
-      }
-
+      dispatch(
+        {
+          type:"TOKEN",
+          token: response.data.token
+        })
+        localStorage.setItem("token_transcandence", response.data.token)
+      navigate("/home")
     })
-    .catch((error) => {
-      console.log("ERROR: "+error);
-    })
+    .catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
+		})
   }
 
   const send_recup_code = () => {
@@ -122,20 +114,19 @@ const {ip} = useSelector((state: any) => ({
     axios.post(url2,{
       "token": token_tfa,
       "email": recup
-    }).then(res => {
-      if (res.data.status === "KO") {
-        toast.error(res.data.message, {
-          position: "bottom-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-          });
-      }
     })
+    .catch((error) =>{
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
+		})
   }
   return (
     <>
