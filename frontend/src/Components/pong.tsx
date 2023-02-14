@@ -317,8 +317,6 @@ export default function Pong() {
 			socket?.emit("tryToPlay", details)
 			socket?.on("rightOrLeft", whichSide)
 		}
-		else
-			alert('Cant play')
 	}
 
 	const errorPrivate = (newMessage: string) => {
@@ -358,6 +356,18 @@ export default function Pong() {
     		<canvas id="canvas" width={900} height={450} style={{width: "50%", height: "50%"}} ref={canvasRef}></canvas>
 		</div>
 	}
+	<ToastContainer
+			position="bottom-right"
+			autoClose={3000}
+			hideProgressBar={false}
+			newestOnTop={false}
+			closeOnClick
+			rtl={false}
+			pauseOnFocusLoss
+			draggable
+			pauseOnHover
+			theme="light"
+		/>
 	</>
 	);
 }

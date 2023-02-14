@@ -220,6 +220,7 @@ export default function Groups_messages() {
 
 
 	const updateChannel = (updated_channel: updateChannelsDTO) => {
+		console.log("CHANNEL UPDATED = ", updated_channel)
 		let tmp: ChannelsDTO[]
 		tmp = []
 		channels.map((channel, i)=>{
@@ -381,6 +382,16 @@ export default function Groups_messages() {
 			setMessages_list(res.data)
 		})
 		.catch((error) => {
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -399,6 +410,16 @@ export default function Groups_messages() {
 			setGet_users_in_this_chan(datas)
 		})
 		.catch((error) => {
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -426,6 +447,16 @@ export default function Groups_messages() {
 			}
 		})
 		.catch((error) => {
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 
@@ -441,6 +472,16 @@ export default function Groups_messages() {
 			setGet_users_not_in_this_chan(res.data)
 		})
 		.catch((error) => {
+			toast.error(error.response.data.message, {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 	}
 

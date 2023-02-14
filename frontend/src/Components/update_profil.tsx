@@ -22,6 +22,7 @@ export default function Update_Profil() {
 	const [recup_email, setRecupEmail] = useState("")
 	const [ismail, setIsMail] = useState(false)
 	const [userError, setUserError] = useState("")
+	const [tmpAvatar, setTmpAvatar] = useState("")
 	const {ip} = useSelector((state: any) => ({
 		...state.ConfigReducer
 	}))
@@ -39,6 +40,7 @@ export default function Update_Profil() {
 		.then(res => {
 			setUsername(res.data.username);
 			setAvatar(res.data.avatar)
+			setTmpAvatar(res.data.avatar)
 			setTfa(res.data.is2fa)
 			setEmail(res.data.email)
 			if (res.data.email)
@@ -99,6 +101,16 @@ export default function Update_Profil() {
 		)
 		.then(response => {
 			deleteBlockedUser(user_id)
+			toast.success("The user was deblock", {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -120,6 +132,17 @@ export default function Update_Profil() {
 		axios.post(url,{
 			"token": localStorage.getItem("token_transcandence"),
 			"username": username
+		}).then(() => {
+			toast.success("Username was changed", {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -147,9 +170,30 @@ export default function Update_Profil() {
 			if (email === "") {
 				setIsMail(false)
 				change2fa(false)
+				toast.success("Email was deleted", {
+					position: "bottom-right",
+					autoClose: 3000,
+					hideProgressBar: false,
+					closeOnClick: true,
+					pauseOnHover: true,
+					draggable: true,
+					progress: undefined,
+					theme: "light",
+					});
 			}
-			else
+			else {
 				setIsMail(true)
+				toast.success("Email was changed", {
+					position: "bottom-right",
+					autoClose: 3000,
+					hideProgressBar: false,
+					closeOnClick: true,
+					pauseOnHover: true,
+					draggable: true,
+					progress: undefined,
+					theme: "light",
+					});
+			}
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -165,16 +209,66 @@ export default function Update_Profil() {
 		})
 	}
 
+	function isImage(data: string){
+		let knownTypes: any = {
+		  '/': 'data:image/jpeg;base64,',
+		  'i': 'data:image/png;base64,',
+		}
+		  
+		let image = new Image()
+		
+		let i = data.search(",")
+		if(!knownTypes[data[i + 1]]) {
+			console.log("encoded image didn't match known types");
+			return false;
+		}
+		else {
+			image.src = knownTypes[0]+data
+			image.onload = function(){
+			  //This should load the image so that you can actually check
+			  //height and width.
+			  if(image.height === 0 || image.width === 0){
+				console.log('encoded image missing width or height');
+				return false;
+			  }
+		  	}
+		  return true;
+		}
+	}
+
 	const changeAvatar = (post: string) => {
 		let url='http://'+ip+':3001/api/users/change_avatar'
-		
+		if (isImage(post) === false) {
+			toast.error("Error: Wrong file format.", {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
+				setAvatar(tmpAvatar)
+			return
+		}
 		axios.post(url,{
 			"token": localStorage.getItem("token_transcandence"),
 			"image": post
 		}
 		)
 		.then(response => {
-			setAvatar(response.data.avatar)
+			setAvatar(response.data)
+			toast.success("Avatar was changed", {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -284,7 +378,7 @@ export default function Update_Profil() {
         		<input
         		  type="file"
         		  name="myFile"
-        		  accept=".jpeg, .png, .jpg"
+        		  accept=".png, .jpg"
         		  onChange={(e) => handleFileUpload(e)}
         		/>
 				<button className="btn btn-outline-secondary">Modifier</button>
@@ -315,7 +409,7 @@ export default function Update_Profil() {
 				</div>
 			) ||
 			(
-				<h4>Pour activer la 2fa, entrez une adresse mail ci-dessus</h4>
+				<h4>Pour pouvoir activer la 2fa, entrez une adresse mail ci-dessus</h4>
 			)
 		}
 		{
