@@ -99,6 +99,16 @@ export default function Update_Profil() {
 		)
 		.then(response => {
 			deleteBlockedUser(user_id)
+			toast.success("The user was deblock", {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -120,6 +130,17 @@ export default function Update_Profil() {
 		axios.post(url,{
 			"token": localStorage.getItem("token_transcandence"),
 			"username": username
+		}).then(() => {
+			toast.success("Username was changed", {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -147,9 +168,30 @@ export default function Update_Profil() {
 			if (email === "") {
 				setIsMail(false)
 				change2fa(false)
+				toast.success("Email was deleted", {
+					position: "bottom-right",
+					autoClose: 3000,
+					hideProgressBar: false,
+					closeOnClick: true,
+					pauseOnHover: true,
+					draggable: true,
+					progress: undefined,
+					theme: "light",
+					});
 			}
-			else
+			else {
 				setIsMail(true)
+				toast.success("Email was changed", {
+					position: "bottom-right",
+					autoClose: 3000,
+					hideProgressBar: false,
+					closeOnClick: true,
+					pauseOnHover: true,
+					draggable: true,
+					progress: undefined,
+					theme: "light",
+					});
+			}
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -175,6 +217,16 @@ export default function Update_Profil() {
 		)
 		.then(response => {
 			setAvatar(response.data.avatar)
+			toast.success("Avatar was changed", {
+				position: "bottom-right",
+				autoClose: 3000,
+				hideProgressBar: false,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				progress: undefined,
+				theme: "light",
+				});
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {

@@ -215,7 +215,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (!decoded)
 			return(console.log("Error: TryToPlay: You are not authentified."))
 		if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
-			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPrivate", "Error: You are already in a game."))
+			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPublic", "Error: You are already in a game."))
 		console.log("details = ", details)
 		if (this.gameService.areGamesFull() === true ) {
 			await this.gameService.createGame(decoded.ft_id, details.socketId)
