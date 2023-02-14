@@ -90,7 +90,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('changePassword')
 	async changePassowrd(@ConnectedSocket() socket: Socket, @MessageBody() body: ChangePswDTO) {
 		console.log("\n\n--------------------|--------------------|--------------------| CHANGE PASSWORD |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(body.jwt)
+		let decoded = await this.chatService.validateUser(body.jwt)
 		if (!decoded) {
 			this.server.to(socket.id).emit("Error: You are not authentified")
 			return(console.log("Error: You are not authentified"))
@@ -101,6 +101,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: User is not in this channel."))
 		if (await this.chatService.isOwner(decoded.ft_id, body.chanId) === false)
 			return(console.log("Error: User is not the owner of this channel."))
+		if (body.password.length > 0 && body.password.length < 5)
 		await this.chatService.changePassword(decoded.ft_id, body.chanId, body.password);
 		let notInChan = await this.chatService.getUsersNotInChan(body.chanId)
 		//console.log("notInChan = ", notInChan)
@@ -110,13 +111,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			if (tempTab)
 				targetedSockets.push(tempTab)
 		}
-		let name = await this.chatService.getChannelNameById(body.chanId)
+		let chanName = await this.chatService.getChannelNameById(body.chanId)
 		let ownerId = await this.chatService.getOwnerIdById(body.chanId)
-		let channelType = await this.chatService.getChannelTypeById(body.chanId)
+		let chanType = await this.chatService.getChannelTypeById(body.chanId)
 		let json = {
-			"name": name[0].name,
-			"owner_id": ownerId[0].owner_id,
-			"channel_type": channelType[0].channel_type,
+			"name": chanName,
+			"owner_id": ownerId,
+			"channel_type": chanType,
 			"id": body.chanId,
 			"is_admin": false,
 			"is_in_chan": false,
@@ -136,7 +137,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('leaveChannel')
 	async leaveChannel(@ConnectedSocket() socket: Socket, @MessageBody() details: LeaveChanDTO) {
 		console.log("\n\n--------------------|--------------------|--------------------| LEAVE CHANNEL |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.jwt)
+		let decoded = await this.chatService.validateUser(details.jwt)
 		console.log("details = ", details)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
@@ -149,7 +150,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		let targetedUsers = await this.chatService.getUsersInChan(details.chanId);
 		let channel = await this.chatService.getChannelById(details.chanId)
 		let targetedSockets = []
-		let allUsers = await this.chatService.getAllUsers2()
+		let allUsers = await this.chatService.getAllUsers()
 		let allSockets = []
 		for (let i = 0; i < allUsers.length; i++) {
 			let tempTab = this.chatService.getSocketsByUser(allUsers[i].ft_id)
@@ -162,10 +163,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				targetedSockets.push(tempTab)
 		}
 		if (ret.ownerLeft == true) {
-			let json = {
-				"chan_id": details.chanId
-			}
-			console.log("owner left channel : ", json, " sent to all users to 'deleteChannel'")
 			if (allSockets.length > 0) {
 				for (let i = 0; i < allSockets.length; i++)
 					this.server.to(allSockets[i]).emit('deleteChannel', details.chanId);
@@ -173,10 +170,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		}
 		else {
 			if (ret.channelType === "private") {
-				let json = {
-					"chan_id": details.chanId
-				}
-				console.log("user other than owner left private channel : ", json, " sent to leaver to 'deleteChannel'")
 				//for (let i = 0; i < senderSockets.length; i++)
 				if (senderSockets)
 					this.server.to(senderSockets).emit('deleteChannel', details.chanId);
@@ -184,9 +177,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			else {
 				//let isBanned = await this.chatService.isBannedInChan(decoded.ft_id, details.chanId)
 				let jsonToSender = {
-					"name": channel[0].name,
-					"owner_id": channel[0].owner_id,
-					"channel_type": channel[0].channel_type,
+					"name": channel.name,
+					"owner_id": channel.owner_id,
+					"channel_type": channel.channel_type,
 					"id": details.chanId,
 					"is_admin": false,
 					"is_in_chan": false,
@@ -213,7 +206,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('inviteToPlay')
 	async inviteToPlay(@ConnectedSocket() socket: Socket, @MessageBody() details: inviteToPlayDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW GAME INVITATION |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.jwt)
+		let decoded = await this.chatService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		if (await this.chatService.userExists(details.receiverId) === false)
@@ -235,7 +228,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('sendDirectMessage')
 	async sendDirectMessage(@ConnectedSocket() socket: Socket, @MessageBody() msg: directMessage) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW DIRECT MESSAGE |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(msg.jwt)
+		let decoded = await this.chatService.validateUser(msg.jwt)
 		console.log("received from front : ", msg)
 		if (!decoded)
 			return(console.log("New DM Error: You are not authentified."))
@@ -268,7 +261,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('createDiscussion')
 	async createDiscussion(@ConnectedSocket() socket: Socket, @MessageBody() details: discussionDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW DISCUSSION |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.jwt)
+		let decoded = await this.chatService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("New Discussion Error: You are not authentified."))
 		let senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
@@ -301,7 +294,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('muteUser')
 	async muteUser(@ConnectedSocket() socket: Socket, @MessageBody() details: muteUserDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| MUTE USER |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.jwt)
+		let decoded = await this.chatService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		if (await this.chatService.userExists(details.receiverId) === false)
@@ -328,7 +321,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('banUser')
 	async banUser(@ConnectedSocket() socket: Socket, @MessageBody() details: banUserDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| BAN USER |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.jwt)
+		let decoded = await this.chatService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		if (await this.chatService.userExists(details.receiverId) === false)
@@ -356,9 +349,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			"is_banned": true,
 			"action": 1
 		}
-		let youAreBanned = {
-			"chan_id": details.chanId
-		}
 		let bannedSockets = this.chatService.getSocketsByUser(details.receiverId)
 		if (bannedSockets)
 			this.server.to(bannedSockets).emit('deleteChannel', details.chanId);
@@ -381,7 +371,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('unbanUser')
 	async unbanUser(@ConnectedSocket() socket: Socket, @MessageBody() details: banUserDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| UNBAN USER |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.jwt)
+		let decoded = await this.chatService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		if (await this.chatService.userExists(details.receiverId) === false)
@@ -412,14 +402,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		let ownerId = await this.chatService.getChannelOwner(details.chanId)
 		let chanType = await this.chatService.getChannelTypeById(details.chanId)
 		let youAreUnbanned = {
-			"name": chanName[0].name,
+			"name": chanName,
 			"owner_id": ownerId.owner_id,
-			"channel_type": chanType[0].channel_type,
+			"channel_type": chanType,
 			"id": details.chanId,
 			"is_admin": await this.chatService.isAdmin(details.receiverId, details.chanId),
 			"is_in_chan": true,
 			"is_owner": false,
-			"is_banned": false
+			"is_banned": false,
+			"is_selected": false,
+			"color": "none"
 		}
 		let unbannedSockets = this.chatService.getSocketsByUser(details.receiverId)
 		if (unbannedSockets)
@@ -444,7 +436,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('giveAdminRole')
 	async setAsAdmin(@ConnectedSocket() socket: Socket, @MessageBody() details: banUserDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| SET AS ADMIN |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.jwt)
+		let decoded = await this.chatService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		if (await this.chatService.userExists(details.receiverId) === false)
@@ -473,23 +465,39 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		let targetedUsers = await this.chatService.getUsersInChan(details.chanId);
 		let targetedSockets = []
 		for (let i = 0; i < targetedUsers.length; i++) {
-			if (targetedUsers[i].user_id != details.receiverId) {
+			//if (targetedUsers[i].user_id != details.receiverId) {
 				let tempTab = this.chatService.getSocketsByUser(targetedUsers[i].user_id)
 				if (tempTab)
 					targetedSockets.push(tempTab)
-			}
+			//}
 		}
 		if (targetedSockets.length > 0) {
 			for (let i = 0; i < targetedSockets.length; i++) {
 				this.server.to(targetedSockets[i]).emit('updateUserInChan', json);
 			}
 		}
+		let newAdminSockets = this.chatService.getSocketsByUser(details.receiverId)
+		if (newAdminSockets) {
+			let json = {
+				"name": await this.chatService.getChannelNameById(details.chanId),
+				"owner_id": await this.chatService.getChannelNameById(details.chanId),
+				"channel_type": await this.chatService.getChannelNameById(details.chanId),
+				"id": details.chanId,
+				"is_admin": true,
+				"is_in_chan": true,
+				"is_owner": false,
+				"is_banned": false,
+				"is_selected": false,
+				"color": "none"
+			}
+			this.server.to(newAdminSockets).emit('updateChannel', json);
+		}
 	}
 
 	@SubscribeMessage('declineChannelInvitation')
 	async declineChannelInvitation(@ConnectedSocket() socket: Socket, @MessageBody() details: declineChannelDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| CHANNEL INVITATION DECLINED |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.token)
+		let decoded = await this.chatService.validateUser(details.token)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		const senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
@@ -501,7 +509,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('joinChannel')
 	async joinChannel(@ConnectedSocket() socket: Socket, @MessageBody() details: JoinChanDTO) {
 		console.log("\n\n--------------------|--------------------|--------------------| JOINING CHANNEL |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.token)
+		let decoded = await this.chatService.validateUser(details.token)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		const senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
@@ -512,19 +520,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		const channel = await this.chatService.joinChannel(details)
 		let chanName = await this.chatService.getChannelNameById(details.chan_id)
 		let ownerId = await this.chatService.getOwnerIdById(details.chan_id)
-		let channelType = await this.chatService.getChannelTypeById(details.chan_id)
+		let chanType = await this.chatService.getChannelTypeById(details.chan_id)
 		if (channel.status === "OK") {
 			let jsonToOwner = {
-				"name": chanName[0].name,
-				"owner_id": ownerId[0].owner_id,
-				"channel_type": channelType[0].channel_type,
+				"name": chanName,
+				"owner_id": ownerId,
+				"channel_type": chanType,
 				"id": details.chan_id,
 				"is_admin": false,
 				"is_in_chan": true,
 				"is_owner": false,
 				"is_banned": false
 			}
-			if (channelType[0].channel_type === "private")
+			if (chanType === "private")
 				this.chatService.deleteChannelInvitations(decoded.ft_id, details.chan_id)
 			if (senderSockets)
 				this.server.to(senderSockets).emit('channelJoined', jsonToOwner)
@@ -563,7 +571,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('createChannel')
 	async createChannel(@ConnectedSocket() socket: Socket, @MessageBody() details: ChannelDTO) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW CHANNEL REQUESTED |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.token)
+		let decoded = await this.chatService.validateUser(details.token)
 		if (!decoded)
 		{
 			this.server.to(socket.id).emit("receiveError", "Error: You are not authentified.")
@@ -576,7 +584,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return(this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: Channel name is too short. A minimum of 3 characters is required."))
 		if (details.channel_name.length > 20)
 			return(this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: Channel name is too long. Maximum characters is 20."))
-		const newChannel = await this.chatService.createChannel(details)
+		const newChannel = await this.chatService.createChannel(decoded.ft_id, details.channel_name, details.channel_type, details.password)
 		let toSendtoOwner = {
 			"name": newChannel.name,
 			"owner_id": newChannel.owner_id,
@@ -585,7 +593,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			"is_admin": true,
 			"is_in_chan": true,
 			"is_owner": true,
-			"is_banned": false
+			"is_banned": false,
+			"is_selected": false,
+			"color": "none"
 		}
 		if (ownerSockets)
 			this.server.to(ownerSockets).emit('channelCreated', toSendtoOwner)
@@ -598,7 +608,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				"is_admin": false,
 				"is_in_chan": false,
 				"is_owner": false,
-				"is_banned": false
+				"is_banned": false,
+				"is_selected": false,
+				"color": "none"
 			}
 			const otherSockets = this.chatService.getAllOtherSockets(newChannel.owner_id)
 			if (otherSockets.length > 0) {
@@ -611,7 +623,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('sendFriendRequest')
 	async sendFriendRequest(@ConnectedSocket() socket: Socket, @MessageBody() details: AddFriendDTO) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW FRIEND REQUEST |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.token)
+		let decoded = await this.chatService.validateUser(details.token)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		if (await this.chatService.userExists(details.friend_id) === false)
@@ -626,7 +638,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		let username = await this.chatService.getUsernameById(decoded.ft_id)
 		let isBlocked = await this.chatService.isBlockedBy(details.friend_id, decoded.ft_id)
 		if (isBlocked == false) {
-			this.userService.addFriend(details)
+			this.userService.addFriend(decoded.ft_id, details.friend_id)
 			let json = {
 				ft_id: decoded.ft_id,
 				username: username
@@ -641,7 +653,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('removeFriend')
 	async removeFriend(@ConnectedSocket() socket: Socket, @MessageBody() details: AddFriendDTO) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW REMOVE REQUEST |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.token)
+		let decoded = await this.chatService.validateUser(details.token)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		let senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
@@ -653,7 +665,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return(this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: You or targeted user need to accept or refuse the already existing friend request."))
 		const targetedSockets = this.chatService.getSocketsByUser(details.friend_id)
 		let username = await this.chatService.getUsernameById(decoded.ft_id)
-		this.userService.removeFriend(details)
+		this.userService.removeFriend(decoded.ft_id, details.friend_id)
 		let json = {
 			ft_id: decoded.ft_id,
 			username: username
@@ -672,7 +684,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('friendRequestResponse')
 	async getFriendRequestResponse(@ConnectedSocket() socket: Socket, @MessageBody() details: friendRequestAnswer) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW FRIEND REQUEST RESPONSE |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.token)
+		let decoded = await this.chatService.validateUser(details.token)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		let senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
@@ -722,10 +734,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('inviteToChannel')
 	async inviteToChannel(@ConnectedSocket() socket: Socket, @MessageBody() details: channelInvitationDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW CHANNEL INVITATION |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.jwt)
+		let decoded = await this.chatService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
-		let senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
 		if (await this.chatService.userExists(details.receiverId) === false)
 			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: Invited user does not exist."))
 		if (await this.chatService.channelExists(details.chanId) === false)
@@ -736,17 +747,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: Invited user is already in this channel."))
 		if (await this.chatService.isBlockedBy(details.receiverId, decoded.ft_id) === true)
 			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: You are blocked by this user."))
+		if (await this.chatService.isAlreadyInvitedBy(decoded.ft_id, details.receiverId, details.chanId) === true)
+			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: You already have invited this user."))
 		const channelInvitation = await this.chatService.createChannelInvitation(decoded.ft_id, details.receiverId, details.chanId);
-		let channelName = await this.chatService.getChannelNameById(details.chanId)
+		let chanName = await this.chatService.getChannelNameById(details.chanId)
 		let ownerId = await this.chatService.getOwnerIdById(details.chanId)
-		let channelType = await this.chatService.getChannelTypeById(details.chanId)
+		let chanType = await this.chatService.getChannelTypeById(details.chanId)
 		let json = {
 			"status": "OK",
 			"error": "",
 			"id": channelInvitation.channel_id,
-			"name": channelName[0].name,
-			"channel_type": channelType[0].channel_type,
-			"owner_id": ownerId[0].owner_id,
+			"name": chanName,
+			"channel_type": chanType,
+			"owner_id": ownerId,
 			"is_admin": false,
 			"is_in_chan": false
 		}
@@ -758,7 +771,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('messageEmitted')
 	async sendMessage(@ConnectedSocket() socket: Socket, @MessageBody() msgFromClient: msgFromClient) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW MESSAGE RECEIVED |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(msgFromClient.jwt)
+		let decoded = await this.chatService.validateUser(msgFromClient.jwt)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		if (await this.chatService.channelExists(msgFromClient.chanId) === false)
@@ -769,7 +782,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return(this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: You are banned in this channel."))
 		if (await this.chatService.isMuted(decoded.ft_id, msgFromClient.chanId) === true)
 			return(this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: You are muted in this channel."))
-		if (!msgFromClient.content)
+		if (msgFromClient.content.length < 1)
 			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: Your message is empty."))
 		if (msgFromClient.content.length > 1000)
 			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: Your message is too long. Maximum characters is 1000."))
@@ -795,15 +808,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('blockUser')
 	async blockUser(@ConnectedSocket() socket: Socket, @MessageBody() details: BlockuserDTO) {
 		console.log("\n\n--------------------|--------------------|--------------------| NEW BLOCK REQUEST |--------------------|--------------------|--------------------\n")
-		let decoded = this.chatService.validateUser(details.token)
+		let decoded = await this.chatService.validateUser(details.token)
 		if (!decoded)
 			return(console.log("Error: You are not authentified."))
 		if (await this.chatService.userExists(details.block_id) === false)
 			return(this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: This user does not exist."))
-		if (await this.chatService.isBlockedBy(decoded.ft_id, details.block_id))
-			return(this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: You are not friend with targeted user."))
-		await this.userService.blockUser(details)
-		await this.userService.removeWaitFriend(details)
+		if (await this.chatService.isBlockedBy(decoded.ft_id, details.block_id) === true)
+			return(this.sendErrorMessage(decoded.ft_id, socket.id, "receiveError", "Error: You have already blocked targeted user."))
+		await this.userService.blockUser(decoded.ft_id, details.block_id)
+		await this.userService.removeWaitFriend(decoded.ft_id, details.block_id)
 		const targetedSockets = this.chatService.getSocketsByUser(details.block_id)
 		if (targetedSockets)
 			this.server.to(targetedSockets).emit('receiveBlock', decoded.ft_id)
@@ -817,7 +830,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (this.sendErrorMessage("unknown", client.id, "receiveError", "Error: No token provided."))
 		if (client.handshake.query.jwt) {
 			let token = client.handshake.query.jwt.toString()
-			let decoded = this.chatService.validateUser(token)
+			let decoded = await this.chatService.validateUser(token)
 			if (!decoded)
 				return (this.sendErrorMessage("unknown", client.id, "receiveError", "Error: You are not authentified."))
 			this.chatService.addSocketToUser(decoded.ft_id, client.id)

@@ -29,6 +29,14 @@ export class ChatService {
 
 	private socketByUser: Map<string, string[]>= new Map<string, string[]>()
 
+	async isAlreadyInvitedBy(senderId: string, receiverId: string, chanId: number) {
+		if (await this.chanInvitationRepo.findOne({
+			where: {sender_id: senderId, receiver_id: receiverId, channel_id: chanId}
+		}))
+			return true
+		return false
+	}
+
 	async getUsersForDMS(userId: string) {
 		let allUsers = await this.userRepo.find({
 			select: {ft_id: true},
@@ -36,20 +44,21 @@ export class ChatService {
 		let finalUsers = []
 		for (let i = 0; i < allUsers.length; i++) {
 			if (allUsers[i].ft_id === userId)
-				i++
+				continue
 			else if (await this.discussionAlreadyExists(userId, allUsers[i].ft_id) === true)
-				i++
+				continue
 			else if (await this.isBlockedBy(allUsers[i].ft_id, userId) === true)
-				i++
+				continue
 			else {
+				let username = await this.getUsernameById(allUsers[i].ft_id)
 				let json = {
 					"ft_id": allUsers[i].ft_id,
-					"username": await this.getUsernameById(allUsers[i].ft_id),
+					"username": username
 				}
 				finalUsers.push(json)
 			}
 		}
-		return finalUsers
+		return finalUsers	
 	}
 
 	async createGameInvitation(senderId: string, receiverId: string, mode: string) {
@@ -70,9 +79,12 @@ export class ChatService {
 	}
 
 	async discussionExists(discussionId: number) {
-		if (await this.discussionRepo.findOne({ where: {id: discussionId}}))
-			return true
-		return false
+		try {
+			if (await this.discussionRepo.findOne({ where: {id: discussionId}}))
+				return true
+			return false
+		}
+		catch {return false}
 	}
 
 	async discussionAlreadyExists(user1: string, user2: string) {
@@ -248,7 +260,7 @@ export class ChatService {
 		
 	}
 
-	validateUser(token: string)
+	async validateUser(token: string)
 	{
 		let jwt = require('jwt-simple');
 		let secret = process.env.JWT_SECRET;
@@ -259,6 +271,8 @@ export class ChatService {
 			return
 		}
 		let decoded = jwt.decode(token, secret);
+		if (await this.userExists(decoded.ft_id) === false)
+			return
 		return decoded
 	}
 
@@ -278,9 +292,13 @@ export class ChatService {
 
 	async channelExists(chanId: number)
 	{
-		if (await this.chanRepo.findOne({ where: {id: chanId}}))
-			return true
-		return false
+		try {
+			if (await this.chanRepo.findOne({ where: {id: chanId}}))
+				return true
+			return false
+		}
+		catch {return false}
+		
 	}
 
 	async isUserInChan(userId: string, chanId: number)
@@ -362,7 +380,7 @@ export class ChatService {
 	async isOwner(userId: string, chanId: number)
 	{
 		let channel = await this.getChannelById(chanId)
-		if (channel[0].owner_id === userId)
+		if (channel.owner_id === userId)
 			return true
 		return false
 	}
@@ -402,53 +420,50 @@ export class ChatService {
 
 	async getChannelNameById(chanId: number)
 	{
-		let name = await this.chanRepo.find({
+		let chan = await this.chanRepo.findOne({
 			select: {name: true},
 			where: {id: chanId}
 		})
-		return name;
+		if (chan)
+			return chan.name;
 	}
 
 	async getChannelTypeById(chanId: number)
 	{
-		let type = await this.chanRepo.find({
+		let chan = await this.chanRepo.findOne({
 			select: {channel_type: true},
 			where: {id: chanId}
 		})
-		return type;
+		if (chan)
+			return chan.channel_type;
 	}
 
 	async getChannelById(chanId: number)
 	{
-		let channel = await this.chanRepo.find({
+		let chan = await this.chanRepo.findOne({
 			where: {id: chanId}
 		})
-		return channel;
+		return chan;
 	}
 
 	async getOwnerIdById(chanId: number)
 	{
-		let owner = await this.chanRepo.find({
+		let chan = await this.chanRepo.findOne({
 			select: {owner_id: true},
 			where: {id: chanId}
 		})
-		return owner;
+		return chan.owner_id;
 	}
 
 	async getStatusById(userId: string) {
-		let status = await this.userRepo.findOne({
+		let user = await this.userRepo.findOne({
 			select: {status: true},
 			where: {ft_id: userId}
 		})
-		return status.status
+		return user.status
 	}
 
-	async getAllChannels(token: string) {
-		let decoded = this.validateUser(token)
-		if (!decoded) {
-			console.log("Error: You are not authentified.\n")
-			return {status: "KO", message: "The user is not auth"}
-		}
+	async getAllChannels(userId: string) {
 		let publicAndPwdChannelsIds = await this.chanRepo.find({
 			select: {id: true},
 			where: [
@@ -464,7 +479,7 @@ export class ChatService {
 		//console.log("private channels ids = ", privateChannelsIds)
 		let joinedChannelsIds = await this.userinchanRepo.find({
 			select: {chanid: true},
-			where: { user_id: decoded.ft_id }
+			where: { user_id: userId }
 		})
 		//console.log("joined channels ids = ", joinedChannelsIds)
 		let joinedPrivateChannelsIds = []
@@ -475,7 +490,7 @@ export class ChatService {
 			}
 		}
 		//console.log("joined private channels ids = ", joinedPrivateChannelsIds)
-		let pendingInvitations = await this.getPendingChanInvitations(decoded.ft_id)
+		let pendingInvitations = await this.getPendingChanInvitations(userId)
 		let pendingIds = []
 		for (let i = 0; i < privateChannelsIds.length; i++) {
 			for (let j = 0; j < pendingInvitations.length; j++) {
@@ -489,16 +504,16 @@ export class ChatService {
 		let finalChannels = []
 		for (let i = 0; i < finalIds.length; i++) {
 			let tmp = await this.getChannelById(finalIds[i].id)
-			finalChannels[i] = tmp[0]
+			finalChannels[i] = tmp
 		}
 		//console.log("ALL CHANNELS :", finalChannels)
 		let completedChannels = []
 		for (let i = 0; i < finalChannels.length; i++) {
-			let isInChan = await this.isUserInChan(decoded.ft_id, finalChannels[i].id)
-			let isAdmin = await this.isAdmin(decoded.ft_id, finalChannels[i].id)
-			let isOwner = await this.isOwner(decoded.ft_id, finalChannels[i].id)
-			let isBanned = await this.isBannedInChan(decoded.ft_id, finalChannels[i].id)
-			if (await this.isBannedInChan(decoded.ft_id, finalChannels[i].id) === false) {
+			let isInChan = await this.isUserInChan(userId, finalChannels[i].id)
+			let isAdmin = await this.isAdmin(userId, finalChannels[i].id)
+			let isOwner = await this.isOwner(userId, finalChannels[i].id)
+			let isBanned = await this.isBannedInChan(userId, finalChannels[i].id)
+			if (await this.isBannedInChan(userId, finalChannels[i].id) === false) {
 				completedChannels.push({
 					id: finalChannels[i].id,
 					channel_type: finalChannels[i].channel_type,
@@ -526,20 +541,20 @@ export class ChatService {
 		return tab
 	}
 
-	async getAllUsers2() {
+	async getAllUsers() {
 		let users = await this.userRepo.find({select: {ft_id: true}})
 		return users
 	}
 
-	async getAllUsers(token: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
-		let users = await this.userRepo.findBy({
-			username: Not(usernametoken.username),
-		})
-		return users;
-	}
+	//async getAllUsers(token: string) {
+	//	let usernametoken = await this.validateUser(token);
+	//	if (!usernametoken)
+	//		return {status: "KO", message: "Invalid Token"}
+	//	let users = await this.userRepo.findBy({
+	//		username: Not(usernametoken.username),
+	//	})
+	//	return users;
+	//}
 
 	async getUsersInChan(chan_id: number)
 	{
@@ -564,101 +579,68 @@ export class ChatService {
 	{
 		let usersNotInChan = []
 		let allUsers = await this.userRepo.find()
+		console.log(allUsers)
 		for (let i = 0; i < allUsers.length; i++) {
 			let isInChan = await this.isUserInChan(allUsers[i].ft_id, chanId)
 			if (isInChan === false)
 				usersNotInChan.push(allUsers[i].ft_id)
 		}
+		
 		return usersNotInChan;
 	}
 
-	async getUserNotInChan(UserNotInChan: UserNotInChanDTO)
-	{
-		let usernametoken = this.validateUser(UserNotInChan.token);
-		//if (!usernametoken)
-		//	return {status: "KO", message: "Invalid Token"}
-		if (await this.userinchanRepo.findOne({ where: { is_admin: true, chanid: UserNotInChan.channel_id, user_id: usernametoken.ft_id }})) {
-			let usersInChan = await this.userinchanRepo.find({
-				select: {user_id: true},
-				where: { chanid: UserNotInChan.channel_id}
-			});
-			let userNotInChan = []
-			let allUsers = await this.userRepo.find()
-			for (let i = 0; i < allUsers.length; i++) {
-				let isInChan = await this.isUserInChan(allUsers[i].ft_id, UserNotInChan.channel_id)
-				if (isInChan === false)
-					userNotInChan.push(allUsers[i])
-			}
-			return userNotInChan;
-		}
-		//return {status: "KO", message: "The user is not an administrator"};
-	}
+	//async getUserNotInChan(UserNotInChan: UserNotInChanDTO)
+	//{
+	//	let usernametoken = await this.validateUser(UserNotInChan.token);
+	//	//if (!usernametoken)
+	//	//	return {status: "KO", message: "Invalid Token"}
+	//	if (await this.userinchanRepo.findOne({ where: { is_admin: true, chanid: UserNotInChan.channel_id, user_id: usernametoken.ft_id }})) {
+	//		let usersInChan = await this.userinchanRepo.find({
+	//			select: {user_id: true},
+	//			where: { chanid: UserNotInChan.channel_id}
+	//		});
+	//		let userNotInChan = []
+	//		let allUsers = await this.userRepo.find()
+	//		for (let i = 0; i < allUsers.length; i++) {
+	//			let isInChan = await this.isUserInChan(allUsers[i].ft_id, UserNotInChan.channel_id)
+	//			if (isInChan === false)
+	//				userNotInChan.push(allUsers[i])
+	//		}
+	//		return userNotInChan;
+	//	}
+	//	//return {status: "KO", message: "The user is not an administrator"};
+	//}
 
-	async getBlacklistedUsers(user_id: string)
-	{
-		let blockedBy = await this.relationRepo.find({
-			select: {sender_id: true},
-			where: {receiver_id: user_id}
-		})
-		return blockedBy;
-	}
-
-	async createChannel(channel: ChannelDTO) {
-		let usernametoken = this.validateUser(channel.token);
-		//if (!usernametoken)
-		//	return {status: "KO", message: "Invalid Token"}
+	async createChannel(userId: string, name: string, type: string, password: string) {
 		let hash = ""
 		const saltOrRounds = 10;
-		if (channel.password)
-			hash = await bcrypt.hash(channel.password, saltOrRounds);
-		console.log("encrypt pass = ", hash)
-		let json = {	"name": channel.channel_name,
-						"password": hash,
-						"owner_id": usernametoken.ft_id,
-						"channel_type": channel.channel_type,
-					};
+		if (password)
+			hash = await bcrypt.hash(password, saltOrRounds);
+		let json = {
+			"name": name,
+			"password": hash,
+			"owner_id": userId,
+			"channel_type": type,
+		};
 		const chan = await this.chanRepo.create(json);
 		const chann = await this.chanRepo.save(chan);
-		let adduser = {	"user_id": usernametoken.ft_id,
-						"chanid": chann.id,
-						"username": usernametoken.username,
-						"isowner": true,
-						"is_admin": true,
-						"is_in_chan": true
-					};
+		let adduser = {
+			"user_id": userId,
+			"chanid": chann.id,
+			"username": await this.getUsernameById(userId),
+			"isowner": true,
+			"is_admin": true,
+			"is_in_chan": true
+		};
 		const addusers = await this.userinchanRepo.create(adduser);
 		const test = await this.userinchanRepo.save(addusers);
 		let ret = {		
-						"status": "success",
-						"name": chann.name,
-						"owner_id": chann.owner_id,
-						"channel_type": chann.channel_type,
-						"id": chann.id,
-						"is_admin": true
+			"name": chann.name,
+			"owner_id": chann.owner_id,
+			"channel_type": chann.channel_type,
+			"id": chann.id,
 		}
 		return (ret)
-	}
-
-	async addUserInChan(channel: UserInChanDTO) {
-		let usernametoken = this.validateUser(channel.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
-		if (await this.userinchanRepo.findOne({ where: { is_admin: true, chanid: channel.channel_id, user_id: usernametoken.ft_id }})) {
-			if (channel.Users[0])
-			{
-				for (let i = 0; i < channel.Users.length; i++)	{
-					console.log("username in chan = ", channel.Users[i].username)
-					let json = {	"user_id": channel.Users[i].user_id,
-						"chanid": channel.channel_id,
-						"username": channel.Users[i].username
-					};
-					const chan = await this.userinchanRepo.create(json);
-					await this.userinchanRepo.save(chan);
-					return {status: "OK", message: "The user was added in the channel"};
-				}
-			}
-		}
-		return {status: "KO", message: "The user is not an administrator"};
 	}
 
 	async changePassword(userId: string, chanId: number, password: string) {
@@ -683,7 +665,7 @@ export class ChatService {
 	}
 
 	async deletechannel(chan: DeleteChanDTO) {
-		let usernametoken = this.validateUser(chan.token);
+		let usernametoken = await this.validateUser(chan.token);
 		if (!usernametoken)
 			return {status: "KO", message: "Invalid Token"}
 		if (await this.userinchanRepo.findOne({
@@ -701,41 +683,40 @@ export class ChatService {
 		return false
 	}
 
-	async getChanMsg(msg: MessageInChanDTO) {
-		let usernametoken = this.validateUser(msg.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
-		if (await this.userinchanRepo.findOne({
-			where: {chanid: msg.chan_id, user_id: usernametoken.ft_id}
-		})) {
-			let messages = await this.msgRepo.find({
-				where: { chan_id: msg.chan_id }
+	async getChanMsg(userId: string, chanId: number) {
+		//console.log("typeof(chanId) = ", typeof(chanId), " chanId = ", chanId)
+		try {
+			await this.userinchanRepo.findOne({
+				where: { chanid: chanId, user_id: userId }
 			})
-			let blocked = await this.relationRepo.find({
-				where: {sender_id: usernametoken.ft_id, is_block: true}
-			})
-			let tab = [];
-			let x = 0;
-			for (let i = 0; i < messages.length; i++) {
-				let isBlocked = await this.isBlockedBy(usernametoken.ft_id, messages[i].author)
-				if (isBlocked === false) {
-					tab[x] = {
-						id: messages[i].id,
-						author: messages[i].author,
-						author_name: await this.getUsernameById(messages[i].author),
-						chan_id: messages[i].chan_id,
-						content: messages[i].content,
-					};
-					x++;
+			if (await this.userinchanRepo.findOne({
+				where: { chanid: chanId, user_id: userId }
+			})) {
+				let messages = await this.msgRepo.find({
+					where: { chan_id: chanId }
+				})
+				let tab = [];
+				for (let i = 0; i < messages.length; i++) {
+					let isBlocked = await this.isBlockedBy(userId, messages[i].author)
+					if (isBlocked === false) {
+						let json = {
+							id: messages[i].id,
+							author: messages[i].author,
+							author_name: await this.getUsernameById(messages[i].author),
+							chan_id: messages[i].chan_id,
+							content: messages[i].content,
+						}
+						tab.push(json)
+					}
 				}
+				return tab;
 			}
-			return tab;
 		}
-		return {status: "KO", message: "The user is not in the channel"};
+		catch(error) {return "error"}
 	}
 
 	async joinChannel(chan: JoinChanDTO) {
-		let usernametoken = this.validateUser(chan.token);
+		let usernametoken = await this.validateUser(chan.token);
 		//if (!usernametoken)
 		//	return {status: "KO", message: "Invalid Token"}
 		let json = {

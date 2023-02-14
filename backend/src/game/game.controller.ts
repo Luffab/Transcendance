@@ -16,6 +16,6 @@ export class GameController {
 
     @Post('delete_invite')
     async deletegame(@Body() body: deleteGameDTO) {
-        return await this.gameService.deleteGame(body)
+        return await this.gameService.deleteGameInvitation(body)
     }
 }

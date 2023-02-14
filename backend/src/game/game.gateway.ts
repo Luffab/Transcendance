@@ -1,4 +1,4 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect,} from '@nestjs/websockets';
+import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect, ConnectedSocket,} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UserService } from 'src/users/services/user/user.service';
 import { GameService } from './game.service';
@@ -174,22 +174,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('userLeft')
-	async handleBack(@MessageBody() data: createGameDetails) {
+	async handleBack(@ConnectedSocket() socket: Socket, @MessageBody() data: createGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| PLAYER BACKED |--------------------|--------------------|--------------------\n")
-		let decoded = this.gameService.validateUser(data.jwt)
+		let decoded = await this.gameService.validateUser(data.jwt)
 		console.log(data.socketId + " backed")
 		if (!decoded)
 			return(console.log("Error: handleBack: You are not authentified."))
 		let i = this.gameService.getGameIndexFromSocket(data.socketId)
 		if (i === -1)
 			return
+		if (this.gameService.getGameState(i) === "waiting") {
+			this.gameService.deleteGame(i)
+			return
+		}
 		if (this.gameService.getGameState(i) === "waitingForFriend") {
-			this.gameService.deletePrivateGame(i)
+			this.gameService.deleteGame(i)
 			return ;
 		}
 		else if ( this.gameService.getGameState(i) === "waitingFor2Ready" || this.gameService.getGameState(i) === "waitingFor1Ready") {
 			//await this.gameService.setPlayersStatus(i, "Online")
-			this.gameService.deletePrivateGame(i)
+			this.gameService.deleteGame(i)
 			return ;
 		}
 		await this.gameService.setPlayersStatus(i, "Online")
@@ -199,19 +203,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('movePlayer')
-	movePlayer(@MessageBody() data: dataFromClient) {
-		//console.log("\n\n--------------------|--------------------|--------------------| PLAYER MOVE |--------------------|--------------------|--------------------\n")
-		let decoded = this.gameService.validateUser(data.jwt)
+	async movePlayer(@ConnectedSocket() socket: Socket, @MessageBody() data: dataFromClient) {
+		console.log("\n\n--------------------|--------------------|--------------------| PLAYER MOVE |--------------------|--------------------|--------------------\n")
+		let decoded = await this.gameService.validateUser(data.jwt)
 		if (!decoded)
 			return(console.log("Error: MovePlayer: You are not authentified."))
-		let index = this.gameService.getGameIndexFromSocket(data.socketId)
-		this.gameService.movePlayer(index, data.movement, this.gameService.whichPlayer(data.socketId))
+		let i = this.gameService.getGameIndexFromSocket(data.socketId)
+		if (this.gameService.getGameState(i) === "on")
+			this.gameService.movePlayer(i, data.movement, this.gameService.whichPlayer(data.socketId))
 	}
 
 	@SubscribeMessage('tryToPlay')
-	async tryToPlay(@MessageBody() details: createGameDetails) {
+	async tryToPlay(@ConnectedSocket() socket: Socket, @MessageBody() details: createGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| TRY TO PLAY |--------------------|--------------------|--------------------\n")
-		let decoded = this.gameService.validateUser(details.jwt)
+		let decoded = await this.gameService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: TryToPlay: You are not authentified."))
 		if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
@@ -233,24 +238,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('createPrivateGame')
-	async createPrivateGame(@MessageBody() details: createPrivateGameDetails) {
+	async createPrivateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: createPrivateGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| CREATE PRIVATE GAME |--------------------|--------------------|--------------------\n")
-		let decoded = this.gameService.validateUser(details.jwt)
+		let decoded = await this.gameService.validateUser(details.jwt)
 		console.log("details = ", details)
 		if (!decoded)
-			return(console.log("Error: CreatePrivateGame: You are not authentified."))
+			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveErrorPrivate", "Error: You are not authentified."))
 		this.gameService.printIsInGame()
 		if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
-			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPrivate", "Error CREATE: You are already in a game."))
+			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveErrorPrivate", "Error: You are already in a game."))
 		if (await this.gameService.isBlockedBy(details.receiverId, decoded.ft_id) === true)
 			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPrivate", "Error: You are blocked by targeted user."))
 		await this.gameService.createPrivateGame(decoded.ft_id, details.socketId, details.receiverId, details.mode)
 	}
 
 	@SubscribeMessage('joinPrivateGame')
-	async joinPrivateGame(@MessageBody() details: joinPrivateGameDetails) {
+	async joinPrivateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: joinPrivateGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| JOIN PRIVATE GAME |--------------------|--------------------|--------------------\n")
-		let decoded = this.gameService.validateUser(details.jwt)
+		let decoded = await this.gameService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: JoinPrivateGame: You are not authentified."))
 		if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
@@ -265,9 +270,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('readyToGame')
-	async readyToGame(@MessageBody() details: createGameDetails) {
+	async readyToGame(@ConnectedSocket() socket: Socket, @MessageBody() details: createGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| READY TO GAME |--------------------|--------------------|--------------------\n")
-		let decoded = this.gameService.validateUser(details.jwt)
+		let decoded = await this.gameService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: readyToGame: You are not authentified."))
 		//if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
@@ -314,9 +319,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage('spectateGame')
-	async spectateGame(@MessageBody() details: spectateGameDetails) {
+	async spectateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: spectateGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| SPECTATE GAME |--------------------|--------------------|--------------------\n")
-		let decoded = this.gameService.validateUser(details.jwt)
+		let decoded = await this.gameService.validateUser(details.jwt)
 		if (!decoded)
 			return(console.log("Error: readyToGame: You are not authentified."))
 		if (this.gameService.isAlreadySpectating(decoded.ft_id, details.friendId) === true)
@@ -337,7 +342,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (console.log("Error: No token provided.\n"))
 		if (client.handshake.query.jwt) {
 			let token = client.handshake.query.jwt.toString()
-			let decoded = this.gameService.validateUser(token)
+			let decoded = await this.gameService.validateUser(token)
 			if (!decoded)
 				return (console.log("Error: handleConnection: You are not authentified.\n"))
 		}
@@ -352,7 +357,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (console.log("Error: No token provided.\n"))
 		if (client.handshake.query.jwt) {
 			let token = client.handshake.query.jwt.toString()
-			let decoded = this.gameService.validateUser(token)
+			let decoded = await this.gameService.validateUser(token)
 			if (!decoded)
 				return (console.log("Error: You are not authentified.\n"))
 			let i = this.gameService.getGameIndexFromSpecSocket(client.id)

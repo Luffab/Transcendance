@@ -16,7 +16,7 @@ export class UserService{
 		@InjectRepository(GameHistory) private readonly historyRepo: Repository<GameHistory>
 	) {}
 
-	validateUser(token: string)
+	async validateUser(token: string)
 	{
 		let jwt = require('jwt-simple');
 		let secret = process.env.JWT_SECRET;
@@ -27,94 +27,100 @@ export class UserService{
 			return
 		}
 		let decoded = jwt.decode(token, secret);
+		if (await this.userExists(decoded.ft_id) === false)
+			return
 		return decoded
 	}
 
-	async changeimage(image: ImageDTO) {
-		let usernametoken = this.validateUser(image.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
-		await this.userRepo
-    			.createQueryBuilder()
-    			.update(User)
-    			.set({ avatar: image.image })
-    			.where("ft_id= :id", { id: usernametoken.ft_id })
-    			.execute();
-		return {status: "OK", message: "The avatar was changed", avatar: image.image};
-	}
-
-	async changeEmail(email: EmailDTO)
+	async userExists(userId: string)
 	{
-		let usernametoken = this.validateUser(email.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
-		await this.userRepo
-		.createQueryBuilder()
-		.update(User)
-		.set({ email: email.email })
-		.where("ft_id= :id", { id: usernametoken.ft_id })
-		.execute();
-		return {status: "OK", message: "The avatar was changed", email: email.email};
+		if (await this.userRepo.findOne({ where: {ft_id: userId}}))
+			return true
+		return false
 	}
 
-	async changeusername(username: UsernameDTO) {
-		let usernametoken = this.validateUser(username.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async isBlockedBy(requestId: string, targetId: string) {
+		if (await this.relationRepo.findOne({ where: {sender_id: requestId, receiver_id: targetId, is_block: true}}))
+			return true
+		return false
+	}
+
+	async changeImage(userId: string, image: string) {
 		await this.userRepo
     			.createQueryBuilder()
     			.update(User)
-    			.set({ username: username.username })
-    			.where("ft_id= :id", { id: usernametoken.ft_id })
+    			.set({ avatar: image })
+    			.where("ft_id= :id", { id: userId })
     			.execute();
-		return {status: "OK", message: "The username was changed"};
+		return image
 	}
 
-	async getUsersInfos(token: string, id: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Access Forbidden"};
+	async isSameUsername(userId: string, newUsername: string) {
+		let res = await this.userRepo.findOne({
+			select: {username: true},
+			where: {ft_id: userId}
+		})
+		if (res.username === newUsername)
+			return true
+		return false
+	}
+
+	async usernameExists(newUsername: string) {
+		if (await this.userRepo.findOne({
+			select: {username: true},
+			where: {username: newUsername}
+		}))
+			return true
+		return false
+	}
+
+	async changeEmail(userId: string, email: string)
+	{
+		await this.userRepo
+			.createQueryBuilder()
+			.update(User)
+			.set({ email: email })
+			.where("ft_id= :id", { id: userId })
+			.execute();
+		return email
+	}
+
+	async changeUsername(userId: string, username: string) {
+		await this.userRepo
+    			.createQueryBuilder()
+    			.update(User)
+    			.set({ username: username })
+    			.where("ft_id= :id", { id: userId })
+    			.execute();
+	}
+
+	async getUsersInfos(id: string) {
 		let user = await this.userRepo.findOne({
 			select: { username: true, avatar: true, one_party_played: true, one_victory: true, ten_victory: true, nb_victory: true, nb_defeat: true, lvl: true, rank: true},
 			where: { ft_id: id }
 		})
-		if (user)
-			return user;
-		return {status: "KO", message: "Access Forbidden"};
+		return user;
 	}
 
-	async getMyInfos(token: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Access Forbidden"};
+	async getMyInfos(userId: string) {
 		let user = await this.userRepo.findOne({
 			select: {username: true, avatar: true, is2fa: true, recup_emails: true, email: true},
-			where: { ft_id: usernametoken.ft_id }
+			where: { ft_id: userId }
 		})
-		if (user)
-			return user;
-		return {status: "KO", message: "Access Forbidden"};
+		return user;
+		//return {status: "KO", message: "Access Forbidden"};
 	}
 
-	async addFriend(friend: AddFriendDTO) {
-		let usernametoken = this.validateUser(friend.token);
-		//if (!usernametoken)
-		//	return {status: "KO", message: "Invalid Token"}
-		//if (await this.relationRepo.findOne({
-		//	where: { sender_id: usernametoken.ft_id, receiver_id: friend.friend_id}
-		//})) {
-		//	return {status: "KO", message: "The user is already friend"};
-		//}
+	async addFriend(senderId: string, receiverId: string) {
 		let json = {
-			"sender_id": usernametoken.ft_id,
-			"receiver_id": friend.friend_id,
+			"sender_id": senderId,
+			"receiver_id": receiverId,
 			"is_friend": false,
 			"is_block": false,
 			"wait_friend": true
 		}
 		const tmp = await this.relationRepo.create(json);
 		await this.relationRepo.save(tmp);
-		//return {status: "OK", message: "The friend was added"};
 	}
 
 	async removeRelation(senderId: string, receiverId: string) {
@@ -122,9 +128,6 @@ export class UserService{
 	}
 
 	async acceptFriend(senderId: string, receiverId: string) {
-		//let usernametoken = this.validateUser(friend.token);
-		//if (!usernametoken)
-		//	return {status: "KO", message: "Invalid Token"}
 		if (await this.relationRepo.findOne({
 			where: { sender_id: receiverId, receiver_id: senderId, wait_friend: true}
 		})) {
@@ -134,75 +137,51 @@ export class UserService{
     			.set({ is_friend: true, wait_friend: false})
     			.where("sender_id= :id", { id: receiverId })
     			.execute()
-				return {status: "OK", message: "The user accept friend invite"};
 		}
-		return {status: "KO", message: "The user is already friend"};
 	}
 
-	async removeFriend(friend: AddFriendDTO) {
-		let usernametoken = this.validateUser(friend.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async removeFriend(senderId: string, receiverId: string) {
 		if (await this.relationRepo.findOne({
-			where: {sender_id: usernametoken.ft_id, receiver_id: friend.friend_id, is_friend: true}
+			where: {sender_id: senderId, receiver_id: receiverId, is_friend: true}
 		})) {
-			await this.relationRepo.delete({sender_id: usernametoken.ft_id, receiver_id: friend.friend_id, is_friend: true})
-			return {status: "OK", message: "The friend was removed"};
+			await this.relationRepo.delete({sender_id: senderId, receiver_id: receiverId, is_friend: true})
+			return
 		}
 		if (await this.relationRepo.findOne({
-			where: {sender_id: friend.friend_id, receiver_id: usernametoken.ft_id, is_friend: true}
+			where: {sender_id: receiverId, receiver_id: senderId, is_friend: true}
 		})) {
-			await this.relationRepo.delete({sender_id: friend.friend_id, receiver_id: usernametoken.ft_id, is_friend: true})
-			return {status: "OK", message: "The friend was removed"};
+			await this.relationRepo.delete({sender_id: receiverId, receiver_id: senderId, is_friend: true})
+			return
 		}
-		return {status: "KO", message: "The user is not friend"};
 	}
 
-	async blockUser(block: BlockuserDTO) {
-		let usernametoken = this.validateUser(block.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
-		if (await this.relationRepo.findOne({
-			where: { sender_id: usernametoken.ft_id, receiver_id: block.block_id, is_block: true}
-		})) {
-			return {status: "KO", message: "The user is already blocked"};
-		}
+	async blockUser(userId: string, targetId: string) {
 		let json = {
-			"sender_id": usernametoken.ft_id,
-			"receiver_id": block.block_id,
+			"sender_id": userId,
+			"receiver_id": targetId,
 			"is_friend": false,
 			"is_block": true,
 			"wait_friend": false,
 		}
 		const tmp = await this.relationRepo.create(json);
 		await this.relationRepo.save(tmp);
-		return {status: "OK", message: "The user was blocked"};
 	}
 
-	async deblockUser(block: BlockuserDTO) {
-		let usernametoken = this.validateUser(block.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async deblockUser(userId: string, blockedId: string) {
 		if (await this.relationRepo.find({
-			where: { sender_id: usernametoken.ft_id, receiver_id: block.block_id, is_block: true}
-		})) {
-			await this.relationRepo.delete({sender_id: usernametoken.ft_id, receiver_id: block.block_id, is_block: true});
-			return {status: "OK", message: "The user wa unblocked succesfully"};
-		}
-		return {status: "KO", message: "The user is not blocked"};
+			where: { sender_id: userId, receiver_id: blockedId, is_block: true}
+		}))
+			await this.relationRepo.delete({sender_id: userId, receiver_id: blockedId, is_block: true});
 	}
 
-	async getFriends(token: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async getFriends(userId: string) {
 		let tmp_friends1 = await this.relationRepo.find({
 			select: {receiver_id: true},
-			where: {sender_id: usernametoken.ft_id, is_friend: true}
+			where: {sender_id: userId, is_friend: true}
 		})
 		let tmp_friends2 = await this.relationRepo.find({
 			select: {sender_id: true},
-			where: {receiver_id: usernametoken.ft_id, is_friend: true}
+			where: {receiver_id: userId, is_friend: true}
 		})
 		let all_users;
 		let x = 0;
@@ -224,16 +203,12 @@ export class UserService{
 			x++;
 		}
 		let friends = {tab};
-		//console.log("friends = ", friends)
 		return friends;
 	}
 
-	async getWaitFriends(token: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async getWaitFriends(userId: string) {
 		let wait = await this.relationRepo.find({
-			where: {receiver_id: usernametoken.ft_id, wait_friend: true}
+			where: {receiver_id: userId, wait_friend: true}
 		})
 		let tab = []
 		let x = 0;
@@ -371,26 +346,20 @@ export class UserService{
 
 	}
 
-	async isUserBlock(token: string, id: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async isUserBlock(userId: string, targetId: string) {
 		let block = await this.relationRepo.findOne({
-			where: {sender_id: usernametoken.ft_id, receiver_id: id, is_block: true}
+			where: {sender_id: userId, receiver_id: targetId, is_block: true}
 		})
 		if (block)
 			return true
 		return false
 	}
 
-	async isUserFriend(token: string, id: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async isUserFriend(userId: string, targetId: string) {
 		let friend = await this.relationRepo.findOne({
 			where: [
-				{sender_id: usernametoken.ft_id, receiver_id: id, is_friend: true},
-				{sender_id: id, receiver_id: usernametoken.ft_id, is_friend: true}
+				{sender_id: userId, receiver_id: targetId, is_friend: true},
+				{sender_id: targetId, receiver_id: userId, is_friend: true}
 			]
 		})
 		if (friend)
@@ -398,14 +367,11 @@ export class UserService{
 		return false
 	}
 
-	async isUserWaitingFriend(token: string, id: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async isUserWaitingFriend(userId: string, targetId: string) {
 		let friend = await this.relationRepo.findOne({
 			where: [
-				{sender_id: usernametoken.ft_id, receiver_id: id, wait_friend: true},
-				{sender_id: id, receiver_id: usernametoken.ft_id, wait_friend: true}
+				{sender_id: userId, receiver_id: targetId, wait_friend: true},
+				{sender_id: targetId, receiver_id: userId, wait_friend: true}
 			]
 		})
 		if (friend)
@@ -413,12 +379,9 @@ export class UserService{
 		return false
 	}
 
-	async blockedUsers(token: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async blockedUsers(userId: string) {
 		let blocked = await this.relationRepo.find({
-			where: {sender_id: usernametoken.ft_id, is_block: true}
+			where: {sender_id: userId, is_block: true}
 		})
 		let tab = []
 		let all_users;
@@ -460,10 +423,7 @@ export class UserService{
 		return {status: "OK", message: "Game History Updated"}
 	}
 
-	async getGameHistory(token: string, id: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
+	async getGameHistory(id: string) {
 		let user = await this.historyRepo.find({
 			where: {user_id: id}
 		})
@@ -489,22 +449,8 @@ export class UserService{
 		return res;
 	}
 
-	async removeWaitFriend(body: BlockuserDTO) {
-		let usernametoken = this.validateUser(body.token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
-		await this.relationRepo.delete({sender_id: body.block_id, receiver_id: usernametoken.ft_id, wait_friend: true})
-		await this.relationRepo.delete({sender_id: usernametoken.ft_id, receiver_id: body.block_id, wait_friend: true})
-		return {status: "OK", message: "Wait friend deleted"}
-	}
-
-	async getId(token: string) {
-		let usernametoken = this.validateUser(token);
-		if (!usernametoken)
-			return {status: "KO", message: "Invalid Token"}
-		let user = await this.userRepo.findOne({
-			where: {ft_id: usernametoken.ft_id}
-		})
-		return user.ft_id
+	async removeWaitFriend(userId: string, receiverId: string) {
+		await this.relationRepo.delete({sender_id: receiverId, receiver_id: userId, wait_friend: true})
+		await this.relationRepo.delete({sender_id: userId, receiver_id: receiverId, wait_friend: true})
 	}
 }

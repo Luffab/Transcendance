@@ -117,7 +117,7 @@ export class AuthService {
 	//}
 	//
 	async generate2fa(body: RecupDTO) {
-		let usernametoken = this.validateToken2(body.token);
+		let usernametoken = this.validateToken(body.token);
 		if (!usernametoken)
 			return {status: "KO", message: "Invalid Token"}
 		let userz = await this.userRepo.findOne({ where: {ft_id: usernametoken.ft_id } })

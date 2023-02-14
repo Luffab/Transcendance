@@ -437,7 +437,7 @@ export class GameService {
 			return "player2"
 	}
 
-	validateUser(token: string) {
+	async validateUser(token: string) {
 		let jwt = require('jwt-simple');
 		let secret = process.env.JWT_SECRET;
 		try {
@@ -447,7 +447,16 @@ export class GameService {
 			return
 		}
 		let decoded = jwt.decode(token, secret);
+		if (await this.userExists(decoded.ft_id) === false)
+			return
 		return decoded
+	}
+
+	async userExists(userId: string)
+	{
+		if (await this.userRepo.findOne({ where: {ft_id: userId}}))
+			return true
+		return false
 	}
 
 	isAlreadyInGame(userId: string) {
@@ -891,7 +900,7 @@ export class GameService {
 	}
 
 	async getGameInvitation(token: string) {
-		let usernametoken = this.validateUser(token)
+		let usernametoken = await this.validateUser(token)
 		if (!usernametoken)
 			return {status: "KO", message: "Bad token"}
 		let game = await this.inviteRepo.find({
@@ -913,14 +922,14 @@ export class GameService {
 		return tab
 	}
 
-	deletePrivateGame(i: number) {
+	deleteGame(i: number) {
 		this.isInGame.delete(this.gameArray[i].player1)
 		this.isInGame.delete(this.gameArray[i].player2)
 		this.gameArray.splice(i, 1)
 	}
 
-	async deleteGame(game: deleteGameDTO) {
-		let usernametoken = this.validateUser(game.token)
+	async deleteGameInvitation(game: deleteGameDTO) {
+		let usernametoken = await this.validateUser(game.token)
 		if (!usernametoken)
 			return {status: "KO", message: "Bad token"}
 		await this.inviteRepo.delete({sender_id: game.sender_id})
