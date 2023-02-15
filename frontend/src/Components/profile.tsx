@@ -454,7 +454,10 @@ export default function Profile() {
 						{
 							game_history.map((history: historyDTO, i) => {
 								return(
-									<MDBRow  style={{backgroundColor:history.is_win ? "#20FF19" : "#FF4D27"}}>
+									<MDBRow
+										style={{backgroundColor:history.is_win ? "#20FF19" : "#FF4D27"}}
+										key={i}
+									>
 										<MDBCol sm="1">
 											<MDBCardText>{history.p1Score}</MDBCardText>
 										</MDBCol>
@@ -466,10 +469,10 @@ export default function Profile() {
 											onMouseOver={()=>{setMouse_over_user({id:i, type:"username"})}}
 											onMouseOut={()=>{setMouse_over_user({id:-1, type:""})}}
 											style={{
-												textDecoration: mouse_over_user.type == "username" && mouse_over_user.id == i ? "underline" : "none",
+												textDecoration: mouse_over_user.type === "username" && mouse_over_user.id == i ? "underline" : "none",
 												cursor: "pointer",
 												display:"inline",
-												color: mouse_over_user.type == "username" && mouse_over_user.id == i ? "blue" : "black"
+												color: mouse_over_user.type === "username" && mouse_over_user.id == i ? "blue" : "black"
 											}}>{history.opp_username}</MDBCardText>
 										</MDBCol>
 									</MDBRow>

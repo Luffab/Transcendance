@@ -118,7 +118,6 @@ export default function Groups_messages() {
 			}
 		})
 		.catch((error) => {
-			alert('ERROR ! ffffffff')
 		})
 	}
 	useEffect(() => {
@@ -193,7 +192,7 @@ export default function Groups_messages() {
 							return (
 								<div key={i} className="row" onClick={()=> {click_on_discussions(i)}}>
 										<div className="col">
-											<div className="card" style={{backgroundColor: selected_discussion_id == i ? "blue" : "white"}}>
+											<div className="card" style={{backgroundColor: selected_discussion_id === i ? "blue" : "white"}}>
 												<div className="card-body">
 													<h5 className="card-title">{discussion.other_user_name}</h5>
 													<h6 className="card-subtitle mb-2 text-muted">nb_unread_msg</h6>
@@ -242,10 +241,10 @@ export default function Groups_messages() {
 													onMouseOver={()=>{setMouse_over_user({id:i, type:"username"})}}
 													onMouseOut={()=>{setMouse_over_user({id:-1, type:""})}}
 													style={{
-														textDecoration: mouse_over_user.type == "username" && mouse_over_user.id == i ? "underline" : "none",
+														textDecoration: mouse_over_user.type === "username" && mouse_over_user.id === i ? "underline" : "none",
 														cursor: "pointer",
 														display:"inline",
-														color: mouse_over_user.type == "username" && mouse_over_user.id == i ? "blue" : "black"
+														color: mouse_over_user.type === "username" && mouse_over_user.id === i ? "blue" : "black"
 													}}
 												>
 														{message.author_name} {" "}
@@ -296,6 +295,7 @@ export default function Groups_messages() {
 						return (
 							<ListGroup.Item
 								as="li"
+								key={i}
 								className="d-flex justify-content-between align-items-start"
 							>
 								<div className="ms-2 me-auto">
@@ -307,7 +307,7 @@ export default function Groups_messages() {
 					})
 				}
 				{
-					all_users_not_in_conv.length == 0 &&
+					all_users_not_in_conv.length === 0 &&
 					<>Aucun utilisateur disponible</>
 				}
 				</ListGroup>

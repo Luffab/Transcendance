@@ -7,9 +7,9 @@ services:
       - .env
     ports:
       - '5432:5432'
-    #volumes: 
-    #  - db:/var/lib/postgresql/data
-    #  - ./init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+    networks:
+      - backend
+
   adminer:
     image: michalhosna/adminer
     container_name: adminer
@@ -21,6 +21,9 @@ services:
       - ADMINER_DB=${POSTGRES_DB}
     ports:
       - "8080:8080"
+    networks:
+      - backend
+
   back:
     build:
       context: ./backend
@@ -34,6 +37,9 @@ services:
       - ./backend/src:/app/src
     depends_on:
       - postgres
+    networks:
+      - backend
+
   front:
     build:
       context: ./frontend
@@ -44,8 +50,18 @@ services:
       - ./frontend/src:/usr/src/app/my-app/src
     depends_on:
      - postgres
+    networks:
+      - frontend
 
 
 volumes:
   db:
     driver: local
+
+networks:
+  frontend:
+    name: frontend
+    driver: bridge
+  backend:
+    name: backend
+    driver: bridge

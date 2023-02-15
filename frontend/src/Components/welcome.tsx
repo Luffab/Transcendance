@@ -38,7 +38,7 @@ const {ip} = useSelector((state: any) => ({
       setRecup(recup)
     if (queryParameters.get("jwt"))
     {
-      if (queryParameters.get("tfa") == "false")
+      if (queryParameters.get("tfa") === "false")
       {
         let jwt = queryParameters.get("jwt")
         if (jwt)
@@ -65,9 +65,7 @@ const {ip} = useSelector((state: any) => ({
 
 	function invitedLogin() {
 		let input = (document.getElementById("userInput") as HTMLFormElement).value;
-		alert(input)
 		let url='http://'+ip+':3001/api/invited/login?username='+input
-		alert("url =" + url)
 		window.location.href=url
   	}
 
@@ -84,7 +82,7 @@ const {ip} = useSelector((state: any) => ({
     )
     .then(response => {
       setCode_tfa("")
-      if (response.data.status == "KO")
+      if (response.data.status === "KO")
       {
         toast.error(response.data.message, {
           position: "bottom-right",
@@ -97,7 +95,7 @@ const {ip} = useSelector((state: any) => ({
           theme: "light",
           });
       }
-      else if (response.data.status == "OK")
+      else if (response.data.status === "OK")
       {
         dispatch(
           {
@@ -124,16 +122,12 @@ const {ip} = useSelector((state: any) => ({
   }
 
   const send_recup_code = () => {
-    console.log("SEND_RECUP")
-    let url='http://'+ip+':3001/api/auth/verify_code'
     let url2='http://'+ip+':3001/api/auth/2fa/recup'
-    
-
     axios.post(url2,{
       "token": token_tfa,
       "email": recup
     }).then((data) => {
-      console.log(data)
+
     })
     .catch((error) =>{
 			toast.error(error.response.data.message, {

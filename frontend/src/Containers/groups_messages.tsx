@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react"
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios'
-import { useCookies } from 'react-cookie';
-//import io from "socket.io-client"
-import {Modal_join_a_channel} from './modal_join_a_channel.tsx'
 import Modal from 'react-bootstrap/Modal';
-import {Button, ButtonGroup} from 'react-bootstrap';
+import {Button} from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import ListGroup from 'react-bootstrap/ListGroup';
-import Toast from 'react-bootstrap/Toast';
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import Table from 'react-bootstrap/Table';
-import Container from 'react-bootstrap/Container';
 import { MDBInput } from 'mdb-react-ui-kit';
 import React from 'react'
 
@@ -108,7 +103,6 @@ export default function Groups_messages() {
 	const [new_channel_type, setNew_channel_type] = useState("public")
 	const [new_channel_password, setNew_channel_password] = useState("")
 	const [selected_channel_id, setSelected_channel_id] = useState(-1)
-	const [modal_join_a_channel, setModal_join_a_channel] = useState(false)
 	const [modal_create_a_channel, setModal_create_a_channel] = useState(false)
 	const [password_join_channel, setPassword_join_channel] = useState("")
 	const [users_not_in_this_chan, setGet_users_not_in_this_chan] = useState<UsersNotInChanDTO[]>([])
@@ -178,15 +172,15 @@ export default function Groups_messages() {
 
 	}
 	useEffect(() => {
-		socket?.on("deleteUserInChan", messageListener)
+		socket?.on("deleteUserInChan", delete_user_in_chan)
 		return () => {
-			socket?.off("deleteUserInChan", messageListener)
+			socket?.off("deleteUserInChan", delete_user_in_chan)
 		}
 	}, [delete_user_in_chan])
 
 	const add_new_user_in_chan = (res: any) => {
 		res.user.action=1
-		if (selected_channel_id > -1 && channels[selected_channel_id].id == res.channel_id)
+		if (selected_channel_id > -1 && channels[selected_channel_id].id === res.channel_id)
 			setGet_users_in_this_chan([...users_in_this_chan, res.user])
 	}
 	useEffect(() => {
@@ -201,7 +195,7 @@ export default function Groups_messages() {
 		let tmp: UsersInChanDTO[]
 		tmp = []
 		users_in_this_chan.map((user)=>{
-			if (new_user_info.ft_id == user.ft_id)
+			if (new_user_info.ft_id === user.ft_id)
             {
                 new_user_info.action = user.action
 				tmp.push(new_user_info)
@@ -220,7 +214,6 @@ export default function Groups_messages() {
 
 
 	const updateChannel = (updated_channel: updateChannelsDTO) => {
-		console.log("CHANNEL UPDATED = ", updated_channel)
 		let tmp: ChannelsDTO[]
 		tmp = []
 		channels.map((channel, i)=>{
@@ -283,7 +276,7 @@ export default function Groups_messages() {
 				tmp.push(data)
 		})
 		setChannels(tmp)
-		if (data.id == channels[selected_channel_id].id)
+		if (data.id === channels[selected_channel_id].id)
 		{
 			get_messages_by_channels(tmp[selected_channel_id].id)
 			get_users_by_channels(tmp[selected_channel_id].id)
@@ -310,14 +303,18 @@ export default function Groups_messages() {
 	}, [addChannel])
 
 	const showChannelInfos = (channelInfos: ChannelsDTO) => {
-		if (selected_channel_id == -1)
+		if (selected_channel_id === -1)
 		{
 			channelInfos.is_selected=true
 			channelInfos.color='blue'
 			setSelected_channel_id(0)
 			setMessages_list([])
-			get_messages_by_channels(channelInfos.id)
-			get_users_by_channels(channelInfos.id)
+			setGet_users_in_this_chan([])
+			if (channelInfos.is_in_chan)
+			{
+				get_messages_by_channels(channelInfos.id)
+				get_users_by_channels(channelInfos.id)
+			}
 		}
 		else
 		{
@@ -341,7 +338,7 @@ export default function Groups_messages() {
 
 		let tmp_users = users_not_in_this_chan
 		tmp_users.map((tmp_user, i)=>{
-			if (tmp_user.ft_id == user_id)
+			if (tmp_user.ft_id === user_id)
 			{
 				tmp_user.is_invited = true
 				tmp_users[i].is_invited = true
@@ -439,7 +436,7 @@ export default function Groups_messages() {
 				setSelected_channel_id(0)
 				setMessages_list([])
 				setGet_users_in_this_chan([])
-				if (res.data[0].is_in_chan == true)
+				if (res.data[0].is_in_chan === true)
 				{
 					get_messages_by_channels(res.data[0].id)
 					get_users_by_channels(res.data[0].id)
@@ -539,14 +536,11 @@ export default function Groups_messages() {
 				get_messages_by_channels(channels[i].id)
 				get_users_by_channels(channels[i].id)
 			}
-			else
-				setModal_join_a_channel(true)
-				//join_a_channel(channels[i].id)
 		}
 		const click_on_action = (number: number, ft_id: string) => {
 			let tmp_users = users_in_this_chan
 			tmp_users.map((user, i)=>{
-				if (user.ft_id == ft_id)
+				if (user.ft_id === ft_id)
 				{
 					user.action=number
 				}
@@ -639,7 +633,6 @@ export default function Groups_messages() {
 		}
 		return (
 			<>
-			<Modal_join_a_channel is_active={modal_join_a_channel}/>
 			<div className="row">
 			<div className="col" style={{minHeight:"500px", maxHeight:window.innerHeight-250, overflow:"auto", background:"#fff"}}>
 			<br/>
@@ -650,7 +643,7 @@ export default function Groups_messages() {
 								<div key={i} className="row" onClick={()=> {click_on_channels(i)}}>
 										<div className="col">
 											{/*<div className="card" style={{backgroundColor: channel.color}}>*/}
-											<div className="card" style={{backgroundColor: selected_channel_id == i ? "blue" : "white"}}>
+											<div className="card" style={{backgroundColor: selected_channel_id === i ? "blue" : "white"}}>
 												<div className="card-body">
 													<h5 className="card-title">{channel.name}</h5>
 													<h6 className="card-subtitle mb-2 text-muted">nb_unread_msg</h6>
@@ -683,7 +676,7 @@ export default function Groups_messages() {
 						</button>
 					</div>
 					{
-						selected_channel_id > -1 && (channels[selected_channel_id].channel_type == "public" || channels[selected_channel_id].channel_type == "password") && channels[selected_channel_id].is_owner && (
+						selected_channel_id > -1 && (channels[selected_channel_id].channel_type === "public" || channels[selected_channel_id].channel_type == "password") && channels[selected_channel_id].is_owner && (
 							<div className="col">
 								<button onClick={()=>{setModal_add_password_to_channel(true)}} type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_create_channel">
 									Actualiser le password
@@ -692,7 +685,7 @@ export default function Groups_messages() {
 						)
 					}
 					{
-						selected_channel_id > -1 && channels[selected_channel_id].channel_type == "private" && channels[selected_channel_id].is_admin && (
+						selected_channel_id > -1 && channels[selected_channel_id].channel_type === "private" && channels[selected_channel_id].is_admin && (
 							<div className="col">
 								<button onClick={()=>{get_users_not_in_chan();setModal_invite_an_user_in_this_channel(true)}} type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_create_channel">
 									Inviter un utilisateur dans ce channel
@@ -713,13 +706,13 @@ export default function Groups_messages() {
 				<br/>
   <div style={{minHeight:"500px", maxHeight:window.innerHeight-250, overflow:"auto", background:"#fff"}}>
 				{
-					(selected_channel_id == -1 &&
+					(selected_channel_id === -1 &&
 						<></>)
 						||
 					(selected_channel_id > -1 && channels[selected_channel_id] && channels[selected_channel_id].is_in_chan &&
 						messages_list[0] && messages_list.map((message, i) => {
 							return (
-								<div className="row">
+								<div key={i} className="row">
 									<div className="col">
 										<div className="card">
 											<div className="card-body">
@@ -729,10 +722,10 @@ export default function Groups_messages() {
 													onMouseOver={()=>{setMouse_over_user({id:i, type:"username"})}}
 													onMouseOut={()=>{setMouse_over_user({id:-1, type:""})}}
 													style={{
-														textDecoration: mouse_over_user.type == "username" && mouse_over_user.id == i ? "underline" : "none",
+														textDecoration: mouse_over_user.type === "username" && mouse_over_user.id === i ? "underline" : "none",
 														cursor: "pointer",
 														display:"inline",
-														color: mouse_over_user.type == "username" && mouse_over_user.id == i ? "blue" : "black"
+														color: mouse_over_user.type === "username" && mouse_over_user.id === i ? "blue" : "black"
 													}}
 												>
 														{message.author_name} {" "}
@@ -745,14 +738,14 @@ export default function Groups_messages() {
 							)
 						}))
 					||
-					(channels[selected_channel_id].channel_type == "public" && !channels[selected_channel_id].is_in_chan &&
+					(channels[selected_channel_id].channel_type === "public" && !channels[selected_channel_id].is_in_chan &&
 						<>
 							<button onClick={()=>{join_a_channel()}} type="button" className="btn btn-primary">
 								Rejoindre le channel
 							</button>
 						</>)
 					||
-					(channels[selected_channel_id].channel_type == "password" && !channels[selected_channel_id].is_in_chan &&
+					(channels[selected_channel_id].channel_type === "password" && !channels[selected_channel_id].is_in_chan &&
 						<>
 							<Form.Label htmlFor="inputPassword_join_channel">Password</Form.Label>
 							<Form.Control
@@ -773,7 +766,7 @@ export default function Groups_messages() {
 						</>)
 					||
 					(
-						channels[selected_channel_id].channel_type == "private" && !channels[selected_channel_id].is_in_chan && (
+						channels[selected_channel_id].channel_type === "private" && !channels[selected_channel_id].is_in_chan && (
 							<div className="col">
 								<div className="row">
 									<button onClick={()=>{decline_channel_invitation()}} type="button" className="btn btn-primary">
@@ -838,7 +831,7 @@ export default function Groups_messages() {
 			/>
             <p>Type de channel:</p>
             <div className="form-check form-check-inline">
-                <input className="form-check-input" checked={new_channel_type== "public" ? true : false} onChange={(e) => {setNew_channel_type("public")}} type="radio" name="inlineRadioOptions" id="privateMessageRadio1" value="option1"/>
+                <input className="form-check-input" checked={new_channel_type=== "public" ? true : false} onChange={(e) => {setNew_channel_type("public")}} type="radio" name="inlineRadioOptions" id="privateMessageRadio1" value="option1"/>
                 <label className="form-check-label" htmlFor="privateMessageRadio1">Public</label>
             </div>
             <div className="form-check form-check-inline">
@@ -872,7 +865,7 @@ export default function Groups_messages() {
             <Button variant="secondary" onClick={()=>{handleCloseModal_create_a_channel()}}>
                 Close
             </Button>
-            <Button variant="primary" onClick={()=>{create_channel();handleCloseModal_create_a_channel();}} disabled={new_channel_type == ''|| new_channel_name == '' ? true : false}>
+            <Button variant="primary" onClick={()=>{create_channel();handleCloseModal_create_a_channel();}} disabled={new_channel_type === ''|| new_channel_name === '' ? true : false}>
                 Creer
             </Button>
             </Modal.Footer>
@@ -889,6 +882,7 @@ export default function Groups_messages() {
 						return (
 							<ListGroup.Item
 								as="li"
+								key={i}
 								className="d-flex justify-content-between align-items-start"
 							>
 								<div className="ms-2 me-auto">
@@ -924,7 +918,10 @@ export default function Groups_messages() {
 					{
 						users_in_this_chan[0] && users_in_this_chan.map((user_in_this_chan, i)=> {
 							return (
-								<tr style={{backgroundColor:user_in_this_chan.is_owner ? "red" : user_in_this_chan.is_admin ? "green" : ""}}>
+								<tr
+									style={{backgroundColor:user_in_this_chan.is_owner ? "red" : user_in_this_chan.is_admin ? "green" : ""}}
+									key={i}
+								>
 									<td
 										onClick={()=>navigate("/profile?id="+user_in_this_chan.ft_id)}
 										style={{cursor: "pointer"}}
