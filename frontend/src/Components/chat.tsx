@@ -60,7 +60,7 @@ export default function Chat() {
 				}
 				<br/>
 				{
-					type_message_selected == "group_channel" && 
+					type_message_selected === "group_channel" && 
 						<>
 							<Groups_messages/>
 						</>

@@ -184,29 +184,29 @@ export default function Private_Pong() {
 		}
 
 		const checkScore = (p1score: number, p2score: number) => {
-			if (p1score == 1) {
+			if (p1score === 1) {
 				
-				if (tmp_score1 == 0)
+				if (tmp_score1 === 0)
 					reset_player("p1");
 			}
-			else if (p1score == 2) {
-				if (tmp_score1 == 1)
+			else if (p1score === 2) {
+				if (tmp_score1 === 1)
 					reset_player("p1");
 			}
-			else if (p1score == 3) {
-				if (tmp_score1 == 2)
+			else if (p1score === 3) {
+				if (tmp_score1 === 2)
 					reset_player("p1");
 			}
-			if (p2score == 1) {
-				if (tmp_score2 == 0)
+			if (p2score === 1) {
+				if (tmp_score2 === 0)
 					reset_player("p2");
 			}
-			else if (p2score == 2) {
-				if (tmp_score2 == 1)
+			else if (p2score === 2) {
+				if (tmp_score2 === 1)
 					reset_player("p2");
 			}
-			else if (p2score == 3) {
-				if (tmp_score2 == 2)
+			else if (p2score === 3) {
+				if (tmp_score2 === 2)
 					reset_player("p2");
 			}
 		}
@@ -376,8 +376,6 @@ export default function Private_Pong() {
 			socket?.emit("readyToGame", details)
 			socket?.on("rightOrLeft", whichSide)
 		}
-		else
-			alert('Cant play')
 	}
 
 	useEffect(() => {

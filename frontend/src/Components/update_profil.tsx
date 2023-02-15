@@ -220,7 +220,6 @@ export default function Update_Profil() {
 		
 		let i = data.search(",")
 		if(!knownTypes[data[i + 1]]) {
-			console.log("encoded image didn't match known types");
 			return false;
 		}
 		else {
@@ -229,7 +228,6 @@ export default function Update_Profil() {
 			  //This should load the image so that you can actually check
 			  //height and width.
 			  if(image.height === 0 || image.width === 0){
-				console.log('encoded image missing width or height');
 				return false;
 			  }
 		  	}
@@ -426,7 +424,7 @@ export default function Update_Profil() {
 					{
 						blocked.map((block, i) => {
 							return(
-								<li className="list-group-item">
+								<li className="list-group-item" key={i}>
 									<div className="row">
 										<div className="col">
 											{block.username}

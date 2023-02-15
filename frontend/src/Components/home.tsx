@@ -349,7 +349,7 @@ const {socket} = useSelector((state: any) => ({
 						{
 							friends.map((friend, i) => {
 								return(
-									<tbody>
+									<tbody key={i}>
 										<tr>
 											<td scope="row"><span  onClick={() => navigate("/profile?id="+friend.ft_id)}
 											onMouseOver={()=>{setMouse_over_user({id:i, type:"username"})}}
@@ -357,7 +357,7 @@ const {socket} = useSelector((state: any) => ({
 											style={{
 												textDecoration: mouse_over_user.type == "username" && mouse_over_user.id == i ? "underline" : "none",
 												cursor: "pointer",
-												color: mouse_over_user.type == "username" && mouse_over_user.id == i ? "blue" : "black"
+												color: mouse_over_user.type === "username" && mouse_over_user.id == i ? "blue" : "black"
 											}}>{friend.username}</span></td>
 											{
 												friend.status === "Online" &&
@@ -400,7 +400,7 @@ const {socket} = useSelector((state: any) => ({
 						{
 							wait_friends.map((friends, i) => {
 								return(
-									<tbody>
+									<tbody key={i}>
 										<tr>
 											<td scope="row">{friends.username}</td>
 											<td><button type="button" className="btn btn-outline-secondary" style={{height: "60px", width: "100px", backgroundColor: "green", color: "white"}} onClick={() => {AnswerFriendRequest(true, friends.ft_id)}}>Accepter</button></td>
@@ -433,7 +433,7 @@ const {socket} = useSelector((state: any) => ({
 					{
 						game.map((games, i) => {
 							return (
-								<tbody>
+								<tbody key={i}>
 									<tr>
 										<td scope="row">{games.sender_username}</td>
 										<td><button type="button" className="btn btn-outline-secondary" style={{height: "60px", width: "100px", backgroundColor: "green", color: "white"}} onClick={() => {AnswerGameRequest(true, games.sender_id, games.mode)}}>Accepter</button></td>

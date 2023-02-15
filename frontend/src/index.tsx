@@ -11,7 +11,7 @@ import Private_Pong from './Components/private_pong.tsx'
 import Spectate from './Components/spectate.tsx'
 import Profile from './Components/profile.tsx';
 import { Provider } from 'react-redux'
-import store from './redux/store'
+import store from './redux/store.tsx'
 import Navbar from "./Containers/navbar.tsx";
 import { CookiesProvider } from 'react-cookie';
 import { RequireAuthentification, RequireNoAuthentification, RequireAuthentificationContainer } from './helpers/functions.tsx'
