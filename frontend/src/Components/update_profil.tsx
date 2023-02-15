@@ -23,6 +23,7 @@ export default function Update_Profil() {
 	const [ismail, setIsMail] = useState(false)
 	const [userError, setUserError] = useState("")
 	const [tmpAvatar, setTmpAvatar] = useState("")
+	const [isAvatarUpdate, setAvatarUpdate] = useState(false)
 	const {ip} = useSelector((state: any) => ({
 		...state.ConfigReducer
 	}))
@@ -166,7 +167,7 @@ export default function Update_Profil() {
 			"email": email
 		}
 		)
-		.then(response => {
+		.then(() => {
 			if (email === "") {
 				setIsMail(false)
 				change2fa(false)
@@ -237,6 +238,7 @@ export default function Update_Profil() {
 	}
 
 	const changeAvatar = (post: string) => {
+		setAvatarUpdate(false)
 		let url='http://'+ip+':3001/api/users/change_avatar'
 		if (isImage(post) === false) {
 			toast.error("Error: Wrong file format.", {
@@ -257,8 +259,8 @@ export default function Update_Profil() {
 			"image": post
 		}
 		)
-		.then(response => {
-			setAvatar(response.data)
+		.then(() => {
+			setAvatar(avatar)
 			toast.success("Avatar was changed", {
 				position: "bottom-right",
 				autoClose: 3000,
@@ -353,8 +355,11 @@ export default function Update_Profil() {
 			const file = e.target.files[0];
 			let base64: any
 			base64 = await convertToBase64(file);
-			if (base64.length < MAXLENGTH_PICTURE)
+			if (base64.length < MAXLENGTH_PICTURE) {
+				setTmpAvatar(avatar)
 				setAvatar(base64);
+				setAvatarUpdate(true)
+			}
 		}
 	  };
 
@@ -381,7 +386,12 @@ export default function Update_Profil() {
         		  accept=".png, .jpg"
         		  onChange={(e) => handleFileUpload(e)}
         		/>
-				<button className="btn btn-outline-secondary">Modifier</button>
+				{
+					isAvatarUpdate &&
+					(
+						<button className="btn btn-outline-secondary">Modifier</button>
+					)
+				}
     		</form>
         </div>
 		<div>
