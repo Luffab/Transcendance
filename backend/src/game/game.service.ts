@@ -745,12 +745,12 @@ export class GameService {
 
 	async joinPrivateGame(invitedId: string, invitedSocketId: string, ownerId: string) {
 		//console.log("--------------------|--------------------| GameService: joinGame: game joined:")
-		this.isInGame.set(invitedId, true)
-		//let i = this.getFirstAvailableGameIndex()
-		//let i = this.getGameIndexFromId(gameId)
 		let i = this.getPrivateGameIndex(ownerId, invitedId)
 		if (i === -1)
 			return
+		this.isInGame.set(invitedId, true)
+		//let i = this.getFirstAvailableGameIndex()
+		//let i = this.getGameIndexFromId(gameId)
 		this.gameArray[i] = {
 			"id": this.gameArray[i].id,
 			"player1": this.gameArray[i].player1,

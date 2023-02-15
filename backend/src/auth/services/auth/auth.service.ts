@@ -62,14 +62,12 @@ export class AuthService {
 					};
 			if (user) {
 				await this.userRepo.update({ ft_id }, json);
-				//console.log('\nUser updated\n');
 				return user;
 			}
 			return await this.createUser(details);
 		}
 
 	async createUser(details: UserDetails) {
-		//console.log('\nCreating User\n');
 		let reqq = JSON.parse(JSON.stringify(details._json.image.link));
 		if (reqq) {
 			const imageUrl = reqq;
@@ -152,7 +150,6 @@ export class AuthService {
 	}
 
 	async changeTfa( tfa: TfaDTO) {
-		console.log("change tfa", tfa.is_2fa)
 		let usernametoken = this.validateToken(tfa.token);
 		if (!usernametoken)
 			return {status: "KO", message: "Invalid Token"}

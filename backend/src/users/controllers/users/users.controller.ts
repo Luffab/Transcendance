@@ -9,46 +9,72 @@ export class UsersController {
 
 	@Post('change_avatar')
 	async modifyImage(@Body() body: ImageDTO) {
+		if (typeof(body.image) != "string")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		let decoded = await this.usersService.validateUser(body.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500)
 		if (body.image.length > 10485760)
 			throw new HttpException('Error: Image is too large.', 500)
-		return await this.usersService.changeImage(decoded.ft_id, body.image);
+		let ret = await this.usersService.changeImage(decoded.ft_id, body.image);
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 	}
 
 	@Post('change_username')
 	async changeUsername(@Body() body: UsernameDTO) {
+		if (typeof(body.username) != "string")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		let decoded = await this.usersService.validateUser(body.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500)
 		if (body.username.length > 20)
 			throw new HttpException('Error: Username must not exceed 20 characters.', 500)
 		if (body.username.length < 3)
 			throw new HttpException('Error: Username must have at least 3 characters.', 500)
+		if (await this.usersService.isSameUsername(decoded.ft_id, body.username) === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (await this.usersService.isSameUsername(decoded.ft_id, body.username) === true)
 			throw new HttpException('Error: You already use this username.', 500)
+		if (await this.usersService.usernameExists(body.username) === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (await this.usersService.usernameExists(body.username) === true)
 			throw new HttpException('Error: This username is already in use by someone else.', 500)
-		await this.usersService.changeUsername(decoded.ft_id, body.username);
+		let ret = await this.usersService.changeUsername(decoded.ft_id, body.username);
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 	}
 
 	@Post('change_email')
 	async changeEmail(@Body() body: EmailDTO) {
+		if (typeof(body.email) != "string")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		let decoded = await this.usersService.validateUser(body.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500)
 		if (body.email.length > 254)
 			throw new HttpException('Error: Email must exceed 254 characters.', 500)
-		return await this.usersService.changeEmail(decoded.ft_id, body.email)
+		let ret = await this.usersService.changeEmail(decoded.ft_id, body.email)
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 	}
 
 	@Get('user_information')
 	async getUsersInfo(@Query() query: { token: string, id: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500)
 		let user = await this.usersService.getUsersInfos(query.id);
+		if (user === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (user)
 			return user
 		throw new HttpException('Error: User does not exist.', 500);
@@ -57,37 +83,61 @@ export class UsersController {
 	@Post('deblock_user')
 	async deblockUser(@Body() body: BlockuserDTO) {
 		let decoded = await this.usersService.validateUser(body.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500)
+		if (await this.usersService.userExists(body.block_id) === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (await this.usersService.userExists(body.block_id) === false)
 			throw new HttpException('Error: User does not exist.', 500)
+		if (await this.usersService.isBlockedBy(decoded.ft_id, body.block_id) === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (await this.usersService.isBlockedBy(decoded.ft_id, body.block_id) === false)
 			throw new HttpException('Error: This user is not blocked.', 500)
-		await this.usersService.deblockUser(decoded.ft_id, body.block_id);
+		let ret = await this.usersService.deblockUser(decoded.ft_id, body.block_id);
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 	}
 
 	@Get('friends')
 	async getFriends(@Query() query: { token: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500);
-		return await this.usersService.getFriends(decoded.ft_id);
+		let ret = await this.usersService.getFriends(decoded.ft_id);
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
+		else
+			return ret
 	}
 
 	@Get('wait_friends')
 	async getWaitFriends(@Query() query: { token: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500);
-		return await this.usersService.getWaitFriends(decoded.ft_id);
+		let ret = await this.usersService.getWaitFriends(decoded.ft_id);
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
+		else
+			return ret
 	}
 
 	@Get('my_info')
 	async myInfo(@Query() query: { token: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500);
 		let infos = await this.usersService.getMyInfos(decoded.ft_id);
+		if (infos === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (infos)
 			return infos
 		throw new HttpException('Error: User does not exist.', 500);
@@ -96,42 +146,74 @@ export class UsersController {
 	@Get('is_block')
 	async isUserBlocked(@Query() query: { token: string, id: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500);
-		return await this.usersService.isUserBlock(decoded.ft_id, query.id)
+		let ret = await this.usersService.isUserBlock(decoded.ft_id, query.id)
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
+		else
+			return ret
 	}
 
 	@Get('is_friend')
 	async isUserFriend(@Query() query: { token: string, id: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500);
-		return await this.usersService.isUserFriend(decoded.ft_id, query.id)
+		let ret = await this.usersService.isUserFriend(decoded.ft_id, query.id)
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
+		else
+			return ret
 	}
 
 	@Get('is_waiting_friend')
 	async isWaiting(@Query() query: { token: string, id: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500);
+		if (await this.usersService.userExists(query.id) === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (await this.usersService.userExists(query.id) === false)
 			throw new HttpException('Error: User does not exist.', 500);
-		return await this.usersService.isUserWaitingFriend(decoded.ft_id, query.id)
+		let ret = await this.usersService.isUserWaitingFriend(decoded.ft_id, query.id)
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
+		else
+			return ret
 	}
 
 	@Get('blocked_users')
 	async blockedUsers(@Query() query: { token: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500);
-		return await this.usersService.blockedUsers(decoded.ft_id);
+		let ret = await this.usersService.blockedUsers(decoded.ft_id)
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
+		else
+			return ret
 	}
 
 	@Get('get_game_history')
 	async getGameHistory(@Query() query: { token: string, id: string }) {
 		let decoded = await this.usersService.validateUser(query.token)
+		if (decoded === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500);
-		return await this.usersService.getGameHistory(query.id)
+		let ret = await this.usersService.getGameHistory(query.id)
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types have been identified.', 500)
+		else
+			return ret
 	}
 }

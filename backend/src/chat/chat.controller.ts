@@ -85,7 +85,6 @@ export class ChatController {
 		if (await this.chatService.isBannedInChan(decoded.ft_id, query.channel_id) === true)
 			throw new HttpException('Error: You are banned from this channel.', 500)
 		let notInChan = await this.chatService.getUsersNotInChan(query.channel_id);
-		console.log("notInChan = ", notInChan)
 		let usersToReturn = []
 		for (let i = 0; i < notInChan.length; i++) {
 			let isInvited = await this.chatService.isInvitedToChan(notInChan[i], query.channel_id)
@@ -97,14 +96,12 @@ export class ChatController {
 			}
 			usersToReturn.push(json)
 		}
-		console.log("ret = ", usersToReturn)
 		return usersToReturn;
 	}
 
 
 	@Get('channel_messages')
 	async getChanMsg(@Query() query: { token: string, chan_id: number }) {
-		//console.log(typeof(query.token) + typeof(query.chan_id))
 		let decoded = await this.chatService.validateUser(query.token)
 		if (!decoded)
 			throw new HttpException('Error: You are not authentified.', 500)
