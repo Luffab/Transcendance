@@ -39,7 +39,7 @@ export default counterSlice.reducer
 const INITIAL_STATE = {
   token:null,
   socket:null,
-  ip:"10.14.1.5",
+  ip:"10.14.1.7",
   actual_page:"",
 }
 

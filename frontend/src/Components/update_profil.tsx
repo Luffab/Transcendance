@@ -7,6 +7,7 @@ import React from 'react'
 
 const MAXLENGTH_USERNAME = 20;
 const MAXLENGTH_PICTURE = 10485760;
+const MAXLENGTH_EMAIL = 254
 
 export interface blockListDTO {
 	ft_id: string
@@ -391,7 +392,7 @@ export default function Update_Profil() {
 					<div>
 						<h3>Changer l'adresse email</h3>
 						<div className="input-group mb-3" style={{width: "300px"}}>
-            				<input onChange={(e)=>setEmail(e.target.value)} value={email} id="input_modify_email" type="text" className="form-control" aria-describedby="button_modify_email"/>
+            				<input onChange={(e)=>{if(e.target.value.length < MAXLENGTH_EMAIL){setEmail(e.target.value)}}} value={email} id="input_modify_email" type="text" className="form-control" aria-describedby="button_modify_email"/>
             				<button className="btn btn-outline-secondary" type="button" id="button_modify_email" onClick={()=>{changeEmail();}}>Modifier</button>
 						</div>
 					</div>

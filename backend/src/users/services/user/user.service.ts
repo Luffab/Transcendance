@@ -425,7 +425,10 @@ export class UserService{
 
 	async getGameHistory(id: string) {
 		let user = await this.historyRepo.find({
-			where: {user_id: id}
+			where: {user_id: id},
+			order: {
+				id: 'DESC'
+			}
 		})
 		let tab = []
 		for (let i = 0; i < user.length; i++) {
@@ -442,11 +445,7 @@ export class UserService{
 			}
 			tab.push(json)
 		}
-		let res = []
-		for (let i = tab.length - 1; i >= 0; i--) {
-			res.push(tab[i])
-		}
-		return res;
+		return tab;
 	}
 
 	async removeWaitFriend(userId: string, receiverId: string) {
