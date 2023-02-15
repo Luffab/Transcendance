@@ -178,9 +178,9 @@ export default function Groups_messages() {
 
 	}
 	useEffect(() => {
-		socket?.on("deleteUserInChan", messageListener)
+		socket?.on("deleteUserInChan", delete_user_in_chan)
 		return () => {
-			socket?.off("deleteUserInChan", messageListener)
+			socket?.off("deleteUserInChan", delete_user_in_chan)
 		}
 	}, [delete_user_in_chan])
 
@@ -220,7 +220,6 @@ export default function Groups_messages() {
 
 
 	const updateChannel = (updated_channel: updateChannelsDTO) => {
-		console.log("CHANNEL UPDATED = ", updated_channel)
 		let tmp: ChannelsDTO[]
 		tmp = []
 		channels.map((channel, i)=>{
@@ -316,8 +315,12 @@ export default function Groups_messages() {
 			channelInfos.color='blue'
 			setSelected_channel_id(0)
 			setMessages_list([])
-			get_messages_by_channels(channelInfos.id)
-			get_users_by_channels(channelInfos.id)
+			setGet_users_in_this_chan([])
+			if (channelInfos.is_in_chan)
+			{
+				get_messages_by_channels(channelInfos.id)
+				get_users_by_channels(channelInfos.id)
+			}
 		}
 		else
 		{
