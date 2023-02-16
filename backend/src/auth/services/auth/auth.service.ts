@@ -20,38 +20,38 @@ export class AuthService {
 		@InjectRepository(User) private userRepo:
 		Repository<User>,
 		private mailService: MailService
-		) {}
+	) {}
 
-		validateToken(token: string)
-		{
-			let jwt = require('jwt-simple');
-			let secret = process.env.JWT_SECRET;
-			try {
-				jwt.decode(token, secret);
-			}
-			catch {
-				return
-			}
-			let decoded = jwt.decode(token, secret);
-			return decoded
+	validateToken(token: string)
+	{
+		let jwt = require('jwt-simple');
+		let secret = process.env.JWT_SECRET;
+		try {
+			jwt.decode(token, secret);
 		}
-
-		validateToken2(token: string)
-		{
-			let jwt = require('jwt-simple');
-			let secret = process.env.TFA_SECRET;
-			try {
-				jwt.decode(token, secret);
-			}
-			catch {
-				return
-			}
-			let decoded = jwt.decode(token, secret);
-			return decoded
+		catch {
+			return
 		}
+		let decoded = jwt.decode(token, secret);
+		return decoded
+	}
 	
+	validateToken2(token: string)
+	{
+		let jwt = require('jwt-simple');
+		let secret = process.env.TFA_SECRET;
+		try {
+			jwt.decode(token, secret);
+		}
+		catch {
+			return
+		}
+		let decoded = jwt.decode(token, secret);
+		return decoded
+	}
 
-		async validateUser(details: UserDetails) {
+	async validateUser(details: UserDetails) {
+		//try {
 			const { ft_id } = details;
 			const { emails } = details;
 			const user = await this.userRepo.findOne({ where: {ft_id: ft_id } });
@@ -64,17 +64,20 @@ export class AuthService {
 				await this.userRepo.update({ ft_id }, json);
 				return user;
 			}
-			return await this.createUser(details);
-		}
+			let ret = await this.createUser(details);
+			return ret
+		//}
+		//catch {return "error"}
+	}
 
-		async usernameExists(newUsername: string) {
-			if (await this.userRepo.findOne({
-				select: {username: true},
-				where: {username: newUsername}
-			}))
-				return true
-			return false
-		}
+	async usernameExists(newUsername: string) {
+		if (await this.userRepo.findOne({
+			select: {username: true},
+			where: {username: newUsername}
+		}))
+			return true
+		return false
+	}
 
 	async createUser(details: UserDetails) {
 		let reqq = JSON.parse(JSON.stringify(details._json.image.link));

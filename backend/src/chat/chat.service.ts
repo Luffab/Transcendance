@@ -29,6 +29,21 @@ export class ChatService {
 
 	private socketByUser: Map<string, string[]>= new Map<string, string[]>()
 
+	async isInDiscussion(userId: string, discussionId: number) {
+		try {
+			if (await this.discussionRepo.findOne({
+				where: {user1: userId, id: discussionId}
+			}))
+				return true
+			if (await this.discussionRepo.findOne({
+				where: {user2: userId, id: discussionId}
+			}))
+				return true
+			return false
+		}
+		catch {return "error"}
+	}
+
 	async isAlreadyInvitedBy(senderId: string, receiverId: string, chanId: number) {
 		try {
 			if (await this.chanInvitationRepo.findOne({
@@ -49,12 +64,18 @@ export class ChatService {
 			for (let i = 0; i < allUsers.length; i++) {
 				if (allUsers[i].ft_id === userId)
 					continue
+				else if (await this.discussionAlreadyExists(userId, allUsers[i].ft_id) === "error")
+					return "error"
 				else if (await this.discussionAlreadyExists(userId, allUsers[i].ft_id) === true)
 					continue
+				else if (await this.isBlockedBy(allUsers[i].ft_id, userId) === "error")
+					return "error"
 				else if (await this.isBlockedBy(allUsers[i].ft_id, userId) === true)
 					continue
 				else {
 					let username = await this.getUsernameById(allUsers[i].ft_id)
+					if (typeof(username) != "string")
+						return "error"
 					let json = {
 						"ft_id": allUsers[i].ft_id,
 						"username": username
@@ -126,6 +147,8 @@ export class ChatService {
 			let tab1 = []
 			for (let i = 0; i < tmp1.length; i++) {
 				let username = await this.getUsernameById(tmp1[i].user2)
+				if (typeof(username) != "string")
+					return "error"
 				let json = {
 					"id": tmp1[i].id,
 					"other_user": tmp1[i].user2,
@@ -139,6 +162,8 @@ export class ChatService {
 			let tab2 = []
 			for (let i = 0; i < tmp2.length; i++) {
 				let username = await this.getUsernameById(tmp2[i].user1)
+				if (typeof(username) != "string")
+					return "error"
 				let json = {
 					"id": tmp2[i].id,
 					"other_user": tmp2[i].user1,
@@ -158,6 +183,8 @@ export class ChatService {
 			let tab = []
 			for (let i = 0; i < tmp.length; i++) {
 				let username = await this.getUsernameById(tmp[i].author)
+				if (typeof(username) != "string")
+					return "error"
 				let json = {
 					"id": tmp[i].id,
 					"author": tmp[i].author,
@@ -182,13 +209,15 @@ export class ChatService {
 		}
 	}
 
-	async showSockets() {
-		for (let [key, value] of this.socketByUser) {
-			let username = await this.getUsernameById(key)
-			let status = await this.getStatusById(key)
-			console.log(username + " is " + status + " = " + value);
-		}
-	}
+	//async showSockets() {
+	//	for (let [key, value] of this.socketByUser) {
+	//		let username = await this.getUsernameById(key)
+	//		if (typeof(username) != "string")
+	//				return "error"
+	//		let status = await this.getStatusById(key)
+	//		console.log(username + " is " + status + " = " + value);
+	//	}
+	//}
 
 	async setOnlineStatus(userId: string) {
 		try {
@@ -222,7 +251,9 @@ export class ChatService {
 					value.splice(i, 1);
 			}
 			if (value.length === 0) {
-				await this.setOfflineStatus(key)
+				let ret = await this.setOfflineStatus(key)
+				if (ret === "error")
+					return "error"
 				this.socketByUser.delete(key)
 			}
 		}
@@ -249,10 +280,13 @@ export class ChatService {
 
 	async setUsernameToMessage(msg: Messages) {
 		try {
+			let username = await this.getUsernameById(msg.author)
+			if (typeof(username) != "string")
+				return "error"
 			let messageToSend = {
 				id: msg.id,
 				author: msg.author,
-				author_name: await this.getUsernameById(msg.author),
+				author_name: username,
 				chan_id: msg.chan_id,
 				content: msg.content
 			}
@@ -424,7 +458,9 @@ export class ChatService {
 
 	async isOwner(userId: string, chanId: number) {
 		try {
-			let channel = await this.getChannelById(chanId)
+			let channel
+			if ((channel = await this.getChannelById(chanId)) === "error")
+				return "error"
 			if (channel.owner_id === userId)
 				return true
 			return false
@@ -559,7 +595,9 @@ export class ChatService {
 				}
 			}
 			//console.log("joined private channels ids = ", joinedPrivateChannelsIds)
-			let pendingInvitations = await this.getPendingChanInvitations(userId)
+			let pendingInvitations
+			if ((pendingInvitations = await this.getPendingChanInvitations(userId)) === "error")
+				return "error"
 			let pendingIds = []
 			for (let i = 0; i < privateChannelsIds.length; i++) {
 				for (let j = 0; j < pendingInvitations.length; j++) {
@@ -572,17 +610,27 @@ export class ChatService {
 			//console.log("final channels ids = ", finalIds)
 			let finalChannels = []
 			for (let i = 0; i < finalIds.length; i++) {
-				let tmp = await this.getChannelById(finalIds[i].id)
+				let tmp
+				if ((tmp = await this.getChannelById(finalIds[i].id)) === "error")
+					return "error"
 				finalChannels[i] = tmp
 			}
 			//console.log("ALL CHANNELS :", finalChannels)
 			let completedChannels = []
 			for (let i = 0; i < finalChannels.length; i++) {
 				let isInChan = await this.isUserInChan(userId, finalChannels[i].id)
+				if (isInChan === "error")
+					return "error"
 				let isAdmin = await this.isAdmin(userId, finalChannels[i].id)
+				if (isAdmin === "error")
+					return "error"
 				let isOwner = await this.isOwner(userId, finalChannels[i].id)
+				if (isOwner === "error")
+					return "error"
 				let isBanned = await this.isBannedInChan(userId, finalChannels[i].id)
-				if (await this.isBannedInChan(userId, finalChannels[i].id) === false) {
+				if (isBanned === "error")
+					return "error"
+				if (isBanned === false) {
 					completedChannels.push({
 						id: finalChannels[i].id,
 						channel_type: finalChannels[i].channel_type,
@@ -614,7 +662,7 @@ export class ChatService {
 		catch {return "error"}
 	}
 
-	async getAllUsers(): Promise<User[] | string> {
+	async getAllUsers() {
 		try {
 			let users = await this.userRepo.find({select: {ft_id: true}})
 			return users
@@ -656,6 +704,8 @@ export class ChatService {
 		console.log(allUsers)
 		for (let i = 0; i < allUsers.length; i++) {
 			let isInChan = await this.isUserInChan(allUsers[i].ft_id, chanId)
+			if (isInChan === "error")
+				return "error"
 			if (isInChan === false)
 				usersNotInChan.push(allUsers[i].ft_id)
 		}
@@ -678,10 +728,13 @@ export class ChatService {
 			};
 			const chan = await this.chanRepo.create(json);
 			const chann = await this.chanRepo.save(chan);
+			let username = await this.getUsernameById(userId)
+			if (typeof(username) != "string")
+				return "error"
 			let adduser = {
 				"user_id": userId,
 				"chanid": chann.id,
-				"username": await this.getUsernameById(userId),
+				"username": username,
 				"isowner": true,
 				"is_admin": true,
 				"is_in_chan": true
@@ -762,11 +815,16 @@ export class ChatService {
 				let tab = [];
 				for (let i = 0; i < messages.length; i++) {
 					let isBlocked = await this.isBlockedBy(userId, messages[i].author)
+					if (isBlocked === "error")
+						return "error"
 					if (isBlocked === false) {
+						let username = await this.getUsernameById(messages[i].author)
+						if (typeof(username) != "string")
+							return "error"
 						let json = {
 							id: messages[i].id,
 							author: messages[i].author,
-							author_name: await this.getUsernameById(messages[i].author),
+							author_name: username,
 							chan_id: messages[i].chan_id,
 							content: messages[i].content,
 						}
@@ -779,21 +837,23 @@ export class ChatService {
 		catch(error) {return "error"}
 	}
 
-	async joinChannel(chan: JoinChanDTO) {
+	async joinChannel(userId: string, chanId: number, password: string) {
 		try {
-			let usernametoken = await this.validateUser(chan.token);
+			let username = await this.getUsernameById(userId)
+			if (typeof(username) != "string")
+				return "error"
 			let json = {
-				"user_id": usernametoken.ft_id,
-				"chanid": chan.chan_id,
-				"username": await this.getUsernameById(usernametoken.ft_id),
+				"user_id": userId,
+				"chanid": chanId,
+				"username": username,
 				"isowner": false,
 				"isadmin": false
 			};
 			let tmp = await this.chanRepo.findOne({
-				where: {id: chan.chan_id, channel_type: "password"}
+				where: {id: chanId, channel_type: "password"}
 			})
 			if (tmp) {
-				const isMatch = await bcrypt.compare(chan.password, tmp.password);
+				const isMatch = await bcrypt.compare(password, tmp.password);
 				if (isMatch === true) {
 					let user = await this.userinchanRepo.create(json);
 					await this.userinchanRepo.save(user);
@@ -802,14 +862,14 @@ export class ChatService {
 				return {status: "KO"};
 			}
 			if (await this.chanRepo.findOne({
-				where: {id: chan.chan_id, channel_type: "public"}
+				where: {id: chanId, channel_type: "public"}
 			})) {
 				let user = await this.userinchanRepo.create(json);
 				await this.userinchanRepo.save(user);
 				return {status: "OK"};
 			}
 			if (await this.chanRepo.findOne({
-				where: {id: chan.chan_id, channel_type: "private"}
+				where: {id: chanId, channel_type: "private"}
 			})) {
 				let user = await this.userinchanRepo.create(json);
 				await this.userinchanRepo.save(user);

@@ -66,7 +66,6 @@ export class UserService{
     			.set({ avatar: image })
     			.where("ft_id= :id", { id: userId })
     			.execute();
-			return image
 		}
 		catch {
 			return "error"
@@ -111,7 +110,6 @@ export class UserService{
 				.set({ email: email })
 				.where("ft_id= :id", { id: userId })
 				.execute();
-			return email
 		}
 		catch {
 			return "error"

@@ -447,6 +447,8 @@ export class GameService {
 			return
 		}
 		let decoded = jwt.decode(token, secret);
+		if (await this.userExists(decoded.ft_id) === "error")
+			return "error"
 		if (await this.userExists(decoded.ft_id) === false)
 			return
 		return decoded
@@ -454,9 +456,12 @@ export class GameService {
 
 	async userExists(userId: string)
 	{
-		if (await this.userRepo.findOne({ where: {ft_id: userId}}))
-			return true
-		return false
+		try {
+			if (await this.userRepo.findOne({ where: {ft_id: userId}}))
+				return true
+			return false
+		}
+		catch {return "error"}
 	}
 
 	isAlreadyInGame(userId: string) {
@@ -511,9 +516,12 @@ export class GameService {
 	}
 
 	async isBlockedBy(requestId: string, targetId: string) {
-		if (await this.relationRepo.findOne({ where: {sender_id: requestId, receiver_id: targetId, is_block: true}}))
-			return true
-		return false
+		try {
+			if (await this.relationRepo.findOne({ where: {sender_id: requestId, receiver_id: targetId, is_block: true}}))
+				return true
+			return false
+		}
+		catch {return "error"}
 	}
 
 	removeSpectator(i: number, userId: string, socketId: string) {
@@ -582,9 +590,13 @@ export class GameService {
 
 	async joinGame(userId: string, socketId: string) {
 		//console.log("--------------------|--------------------| GameService: joinGame: game joined:")
-		this.isInGame.set(userId, true)
-		let i = this.getFirstAvailableGameIndex()
 		let p2name = await this.getUsernameById(userId)
+		if (typeof(p2name) != "string")
+			return "error"
+		let i = this.getFirstAvailableGameIndex()
+		if (i === -1)
+			return
+		this.isInGame.set(userId, true)
 		this.gameArray[i] = {
 			"id": this.gameArray[i].id,
 			"player1": this.gameArray[i].player1,
@@ -620,14 +632,11 @@ export class GameService {
 		this.setStatus(this.gameArray[i].player2, "In Game")
 		console.log("--------------------|--------------------| GameService: joinGame: all games:")
 		console.log(this.gameArray)
-		let json = {
-			"otherSocket": this.gameArray[i].p1Socket,
-			"index": i
-		}
-		return json
+		return this.gameArray[i].p1Socket
 	}
 
 	async setPlayersStatus(i: number, status: string) {
+		try {
 			await this.userRepo
     			.createQueryBuilder()
     			.update(User)
@@ -640,15 +649,20 @@ export class GameService {
     			.set({ status: status })
     			.where("ft_id = :id", { id: this.gameArray[i].player2 })
     			.execute()
+		}
+		catch {return "error"}
 	}
 
 	async setStatus(userId: string, status: string) {
-		await this.userRepo
-    		.createQueryBuilder()
-    		.update(User)
-    		.set({ status: status })
-    		.where("ft_id = :id", { id: userId })
-    		.execute()
+		try {
+			await this.userRepo
+    			.createQueryBuilder()
+    			.update(User)
+    			.set({ status: status })
+    			.where("ft_id = :id", { id: userId })
+    			.execute()
+		}
+		catch {return "error"}
 	}
 
 	getGameIndexFromId(gameId: number) {
@@ -700,8 +714,6 @@ export class GameService {
 	isAlreadySpectating(userId: string, friendId: string) {
 		let i = this.getGameIndexFromUserId(friendId)
 		console.log("game[" + i + "] = ", this.gameArray[i])
-		//console.log("spectators = ", this.gameArray[i].spectators)
-		//console.log("specSockets = ", this.gameArray[i].specSockets)
 		if (i === -1)
 			return
 		for (let j = 0; j < this.gameArray[i].spectators.length; j++) {
@@ -734,7 +746,6 @@ export class GameService {
 	}
 
 	getSpectatorsSockets(i: number) {
-		//console.log("SPECTATORS = ", this.gameArray[i].specSockets)
 		return this.gameArray[i].specSockets
 	}
 
@@ -743,7 +754,7 @@ export class GameService {
 		this.gameArray[i].specSockets.push(spectatorSocketId)
 	}
 
-	async joinPrivateGame(invitedId: string, invitedSocketId: string, ownerId: string) {
+	joinPrivateGame(invitedId: string, invitedSocketId: string, ownerId: string) {
 		//console.log("--------------------|--------------------| GameService: joinGame: game joined:")
 		let i = this.getPrivateGameIndex(ownerId, invitedId)
 		if (i === -1)
@@ -791,19 +802,23 @@ export class GameService {
 
 	async getUsernameById(userId: string)
 	{
-		let user = await this.userRepo.findOne({
-			select: {username: true},
-			where: { ft_id: userId }})
-		return user.username
+		try {
+			let user = await this.userRepo.findOne({
+				select: {username: true},
+				where: { ft_id: userId }})
+			return user.username
+		}
+		catch {return {status: "error"}}
 	}
 
 	async createPrivateGame(ownerId: string, ownerSocketId: string, invitedId: string, mode: string) {
-		//console.log("--------------------|--------------------| GameService: createGame: new game:")
-		
-		console.log("map in createPrivateGame = ", this.isInGame)
-		this.isInGame.set(ownerId, true)
 		let p1name = await this.getUsernameById(ownerId)
+		if (typeof(p1name) != "string")
+			return "error"
 		let p2name = await this.getUsernameById(invitedId)
+		if (typeof(p2name) != "string")
+			return "error"
+		this.isInGame.set(ownerId, true)
 		let padHeight
 		let initialball
 		let maxpeed
@@ -851,7 +866,6 @@ export class GameService {
 			"specSockets": []
 		}
 		this.gameArray.push(json)
-		//console.log(json)
 		console.log("--------------------|--------------------| GameService: createPrivateGame: all games:")
 		console.log(this.gameArray)
 	}
@@ -859,12 +873,15 @@ export class GameService {
 	async createGame(userId: string, socketId: string) {
 		//console.log("--------------------|--------------------| GameService: createGame: new game:")
 		
-		this.isInGame.set(userId, true)
+		let username = await this.getUsernameById(userId)
+		if (typeof(username) != "string")
+			return "error"
+		this.isInGame.set(userId, true)	
 		let json = {
 			"id": this.gameCounter++,
 			"player1": userId,
 			"player2": "",
-			"player1Name": await this.getUsernameById(userId),
+			"player1Name": username,
 			"player2Name": "",
 			"p1Socket": socketId,
 			"p2Socket": "",
@@ -892,32 +909,30 @@ export class GameService {
 			"specSockets": []
 		}
 		this.gameArray.push(json)
-		//console.log(json)
 		console.log("--------------------|--------------------| GameService: createGame: all games:")
 		console.log(this.gameArray)
 	}
 
-	async getGameInvitation(token: string) {
-		let usernametoken = await this.validateUser(token)
-		if (!usernametoken)
-			return {status: "KO", message: "Bad token"}
-		let game = await this.inviteRepo.find({
-			where: {receiver_id: usernametoken.ft_id}
-		})
-		let tab = []
-		for (let i = 0; i < game.length; i++) {
-			let user = await this.userRepo.findOne({
-				where: {ft_id: game[i].sender_id}
+	async getGameInvitation(userId: string) {
+		try {
+			let game = await this.inviteRepo.find({
+				where: {receiver_id: userId}
 			})
-			let json = {
-				sender_username: user.username,
-				sender_id: user.ft_id,
-				mode: game[i].mode
+			let tab = []
+			for (let i = 0; i < game.length; i++) {
+				let user = await this.userRepo.findOne({
+					where: {ft_id: game[i].sender_id}
+				})
+				let json = {
+					sender_username: user.username,
+					sender_id: user.ft_id,
+					mode: game[i].mode
+				}
+				tab.push(json)
 			}
-			tab.push(json)
+			return tab
 		}
-		console.log(tab)
-		return tab
+		catch {return "error"}
 	}
 
 	deleteGame(i: number) {
@@ -926,11 +941,20 @@ export class GameService {
 		this.gameArray.splice(i, 1)
 	}
 
-	async deleteGameInvitation(game: deleteGameDTO) {
-		let usernametoken = await this.validateUser(game.token)
-		if (!usernametoken)
-			return {status: "KO", message: "Bad token"}
-		await this.inviteRepo.delete({sender_id: game.sender_id})
-		return {status: "OK", message: "Invitation game deleted"}
+	async inviteExists(senderId: string, receiverId: string) {
+		try {
+			if (await this.inviteRepo.findOne({where: {sender_id: senderId, receiver_id: receiverId}}))
+				return true
+			return false
+		}
+		catch {return "error"}
+	}
+
+	async deleteGameInvitation(senderId: string, receiverId: string) {
+		try {
+			await this.inviteRepo.delete({sender_id: senderId, receiver_id: receiverId})
+			return
+		}
+		catch {return "error"}
 	}
 }

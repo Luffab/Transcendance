@@ -56,9 +56,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	) {}
 	private gameIntervals: Map<number, NodeJS.Timer>= new  Map<number, NodeJS.Timer>()
 
-	async sendErrorMessage(userId: string, socket: string, event: string, error: string) {
+	async sendErrorMessage(socket: string, event: string, error: string) {
 		this.server.to(socket).emit(event, error)
-		console.log("Error message sent to " + userId + " :" + error)
 	}
 
 	async keepPlaying(self: GameGateway, p1Socket: string, p2Socket: string) {
@@ -177,12 +176,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	async handleBack(@ConnectedSocket() socket: Socket, @MessageBody() data: createGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| PLAYER BACKED |--------------------|--------------------|--------------------\n")
 		let decoded = await this.gameService.validateUser(data.jwt)
-		console.log(data.socketId + " backed")
+		if (decoded === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorGlobal", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: handleBack: You are not authentified."))
-		let i = this.gameService.getGameIndexFromSocket(data.socketId)
+			return (this.sendErrorMessage(socket.id, "receiveErrorGlobal", "Error: You are not authentified."))
+		let i = this.gameService.getGameIndexFromSocket(socket.id)
 		if (i === -1)
-			return
+			return (this.sendErrorMessage(socket.id, "receiveErrorGlobal", "Error: Game does not exist."))
 		if (this.gameService.getGameState(i) === "waiting") {
 			this.gameService.deleteGame(i)
 			return
@@ -192,13 +192,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return ;
 		}
 		else if ( this.gameService.getGameState(i) === "waitingFor2Ready" || this.gameService.getGameState(i) === "waitingFor1Ready") {
-			//await this.gameService.setPlayersStatus(i, "Online")
 			this.gameService.deleteGame(i)
 			return ;
 		}
-		await this.gameService.setPlayersStatus(i, "Online")
+		let ret = await this.gameService.setPlayersStatus(i, "Online")
+		//if (ret === "error")
+		//	return (this.sendErrorMessage(socket.id, "receiveErrorGlobal", "Error: Wrong data types."))
 		this.gameService.setGameState(i, "toBeStopped")
-		let user = this.gameService.getUserIDFromSocket(i, data.socketId)
+		let user = this.gameService.getUserIDFromSocket(i, socket.id)
 		this.gameService.setLeaver(i, user)
 	}
 
@@ -206,33 +207,44 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	async movePlayer(@ConnectedSocket() socket: Socket, @MessageBody() data: dataFromClient) {
 		console.log("\n\n--------------------|--------------------|--------------------| PLAYER MOVE |--------------------|--------------------|--------------------\n")
 		let decoded = await this.gameService.validateUser(data.jwt)
+		if (decoded === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorGame", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: MovePlayer: You are not authentified."))
-		let i = this.gameService.getGameIndexFromSocket(data.socketId)
+			return (this.sendErrorMessage(socket.id, "receiveErrorGame", "Error: You are not authentified."))
+		let i = this.gameService.getGameIndexFromSocket(socket.id)
+		if (i === -1)
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Game does not exist."))
 		if (this.gameService.getGameState(i) === "on")
-			this.gameService.movePlayer(i, data.movement, this.gameService.whichPlayer(data.socketId))
+			this.gameService.movePlayer(i, data.movement, this.gameService.whichPlayer(socket.id))
 	}
 
 	@SubscribeMessage('tryToPlay')
 	async tryToPlay(@ConnectedSocket() socket: Socket, @MessageBody() details: createGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| TRY TO PLAY |--------------------|--------------------|--------------------\n")
 		let decoded = await this.gameService.validateUser(details.jwt)
+		if (decoded === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorPublic", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: TryToPlay: You are not authentified."))
+			return (this.sendErrorMessage(socket.id, "receiveErrorPublic", "Error: You are not authentified."))
 		if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
-			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPublic", "Error: You are already in a game."))
+			return (this.sendErrorMessage(socket.id, "receiveErrorPublic", "Error: You are already in a game."))
 		console.log("details = ", details)
 		if (this.gameService.areGamesFull() === true ) {
-			await this.gameService.createGame(decoded.ft_id, details.socketId)
-			this.server.to(details.socketId).emit("rightOrLeft", "left")
+			let ret = await this.gameService.createGame(decoded.ft_id, socket.id)
+			if (ret === "error")
+				return (this.sendErrorMessage(socket.id, "receiveErrorPublic", "Error: Wrong data types."))
+			this.server.to(socket.id).emit("rightOrLeft", "left")
 		}
 		else {
-			let ret = await this.gameService.joinGame(decoded.ft_id, details.socketId)
-			this.server.to(details.socketId).emit("rightOrLeft", "right")
-			this.gameService.reset(ret.index)
+			let ret2 = await this.gameService.joinGame(decoded.ft_id, socket.id)
+			if (ret2 === "error")
+				return (this.sendErrorMessage(socket.id, "receiveErrorPublic", "Error: Wrong data types."))
+			let i = this.gameService.getGameIndexFromSocket(socket.id)
+			this.server.to(socket.id).emit("rightOrLeft", "right")
+			this.gameService.reset(i)
 			let self = this
-			let tmpIntervalId = setInterval(this.keepPlaying, 10, self, ret.otherSocket, details.socketId)
-			let tmpGameId = this.gameService.getGameIdFromSocket(ret.otherSocket)
+			const tmpIntervalId = setInterval(this.keepPlaying, 10, self, ret2, socket.id)
+			let tmpGameId = this.gameService.getGameIdFromSocket(ret2)
 			this.gameIntervals.set(tmpGameId, tmpIntervalId)
 		}
 	}
@@ -241,31 +253,35 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	async createPrivateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: createPrivateGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| CREATE PRIVATE GAME |--------------------|--------------------|--------------------\n")
 		let decoded = await this.gameService.validateUser(details.jwt)
-		console.log("details = ", details)
+		if (decoded === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Wrong data types."))
 		if (!decoded)
-			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveErrorPrivate", "Error: You are not authentified."))
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: You are not authentified."))
 		this.gameService.printIsInGame()
 		if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
-			return (this.sendErrorMessage(decoded.ft_id, socket.id, "receiveErrorPrivate", "Error: You are already in a game."))
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: You are already in a game."))
+		if (await this.gameService.isBlockedBy(details.receiverId, decoded.ft_id) === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Wrong data types."))
 		if (await this.gameService.isBlockedBy(details.receiverId, decoded.ft_id) === true)
-			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPrivate", "Error: You are blocked by targeted user."))
-		await this.gameService.createPrivateGame(decoded.ft_id, details.socketId, details.receiverId, details.mode)
+			return
+		let ret = await this.gameService.createPrivateGame(decoded.ft_id, socket.id, details.receiverId, details.mode)
+		if (ret === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Wrong data types."))
 	}
 
 	@SubscribeMessage('joinPrivateGame')
 	async joinPrivateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: joinPrivateGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| JOIN PRIVATE GAME |--------------------|--------------------|--------------------\n")
 		let decoded = await this.gameService.validateUser(details.jwt)
+		if (decoded === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: JoinPrivateGame: You are not authentified."))
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: You are not authentified."))
 		if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
-			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPrivate", "Error JOIN: You are already in a game."))
-		//if (await this.gameService.isBlockedBy(details.receiverId, decoded.ft_id) === true)
-		//	return(console.log("Error: You are blocked by targeted user."))
-		//if (this.gameService.amIInvited())
-		let ret = await this.gameService.joinPrivateGame(decoded.ft_id, details.socketId, details.ownerId)
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: You are already in a game."))
+		let ret = this.gameService.joinPrivateGame(decoded.ft_id, socket.id, details.ownerId)
 		if (!ret)
-			return
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Game does not exist."))
 		
 	}
 
@@ -273,39 +289,30 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	async readyToGame(@ConnectedSocket() socket: Socket, @MessageBody() details: createGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| READY TO GAME |--------------------|--------------------|--------------------\n")
 		let decoded = await this.gameService.validateUser(details.jwt)
+		if (decoded === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: readyToGame: You are not authentified."))
-		//if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
-		//	return(console.log("Error: You are already in a game."))
-		//if (await this.gameService.isBlockedBy(details.receiverId, decoded.ft_id) === true)
-		//	return(console.log("Error: You are blocked by targeted user."))
-		//if (this.gameService.amIInvited())
-		let i = this.gameService.getGameIndexFromSocket(details.socketId)
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: You are not authentified."))
+		let i = this.gameService.getGameIndexFromSocket(socket.id)
 		if (i === -1)
-			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPrivate", "Error: Game does not exist."))
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Game does not exist."))
 		if (this.gameService.getGameState(i) === "waitingForFriend")
-			return (this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorPrivate", "Error: Invited user hasn't joined the game yet."))
+			return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Invited user hasn't joined the game yet."))
 		else if (this.gameService.getGameState(i) === "waitingFor2Ready") {
-			if (this.gameService.isPlayer1(i, decoded.ft_id) === true) {
-				console.log(decoded.ft_id + " is left")
-				this.server.to(details.socketId).emit("rightOrLeft", "left")
-			}
-			else {
-				console.log(decoded.ft_id + " is right")
-				this.server.to(details.socketId).emit("rightOrLeft", "right")
-			}
+			if (this.gameService.isPlayer1(i, decoded.ft_id) === true)
+				this.server.to(socket.id).emit("rightOrLeft", "left")
+			else
+				this.server.to(socket.id).emit("rightOrLeft", "right")
 			this.gameService.setGameState(i, "waitingFor1Ready")
 		}
 		else if (this.gameService.getGameState(i) === "waitingFor1Ready") {
-			if (this.gameService.isPlayer1(i, decoded.ft_id) === true) {
-				console.log(decoded.ft_id + " is left")
-				this.server.to(details.socketId).emit("rightOrLeft", "left")
-			}
-			else {
-				console.log(decoded.ft_id + " is right")
-				this.server.to(details.socketId).emit("rightOrLeft", "right")
-			}
-			await this.gameService.setPlayersStatus(i, "In Game")
+			if (this.gameService.isPlayer1(i, decoded.ft_id) === true)
+				this.server.to(socket.id).emit("rightOrLeft", "left")
+			else
+				this.server.to(socket.id).emit("rightOrLeft", "right")
+			let ret = await this.gameService.setPlayersStatus(i, "In Game")
+			if (ret === "error")
+				return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Wrong data types."))
 			let p1Socket = this.gameService.getP1Socket(i)
 			let p2Socket = this.gameService.getP2Socket(i)
 			this.gameService.setGameState(i, "on")
@@ -322,15 +329,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	async spectateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: spectateGameDetails) {
 		console.log("\n\n--------------------|--------------------|--------------------| SPECTATE GAME |--------------------|--------------------|--------------------\n")
 		let decoded = await this.gameService.validateUser(details.jwt)
+		if (decoded === "error")
+			return (this.sendErrorMessage(socket.id, "receiveErrorSpectate", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: readyToGame: You are not authentified."))
+			return (this.sendErrorMessage(socket.id, "receiveErrorSpectate", "Error: You are not authentified."))
 		if (this.gameService.isAlreadySpectating(decoded.ft_id, details.friendId) === true)
-			return(this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorHome", "Error: You are already spectating this game."))
+			return(this.sendErrorMessage(socket.id, "receiveErrorSpectate", "Error: You are already spectating this game."))
 		let i = this.gameService.getGameIndexFromUserId(details.friendId)
 		if (i === -1)
-			return(this.sendErrorMessage(decoded.ft_id, details.socketId, "receiveErrorHome", "Error: Your friend is not in game."))
+			return(this.sendErrorMessage(socket.id, "receiveErrorSpectate", "Error: Your friend is not in game."))
 		if (this.gameService.getGameState(i) === "on") {
-			this.gameService.addSpectator(i, decoded.ft_id, details.socketId)
+			this.gameService.addSpectator(i, decoded.ft_id, socket.id)
 		}
 	}
 
@@ -339,12 +348,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		console.log("--------------------|--------------------| GameGateway: handleConnection: new socket id:")
 		console.log(client.id);
 		if (client.handshake.query.jwt === "null")
-			return (console.log("Error: No token provided.\n"))
+			return
 		if (client.handshake.query.jwt) {
 			let token = client.handshake.query.jwt.toString()
 			let decoded = await this.gameService.validateUser(token)
+			if (decoded === "error")
+				return
 			if (!decoded)
-				return (console.log("Error: handleConnection: You are not authentified.\n"))
+				return
 		}
 	}
 
@@ -354,12 +365,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		console.log(client.id)
 		console.log("jwt = ", client.handshake.query.jwt)
 		if (client.handshake.query.jwt === "null")
-			return (console.log("Error: No token provided.\n"))
+			return
 		if (client.handshake.query.jwt) {
 			let token = client.handshake.query.jwt.toString()
 			let decoded = await this.gameService.validateUser(token)
+			if (decoded === "error")
+				return
 			if (!decoded)
-				return (console.log("Error: You are not authentified.\n"))
+				return
 			let i = this.gameService.getGameIndexFromSpecSocket(client.id)
 			if (i != -1)
 				this.gameService.removeSpectator(i, decoded.ft_id, client.id)
