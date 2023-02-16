@@ -224,6 +224,7 @@ export class UsersController {
 		let ret = await this.usersService.getGameHistory(query.id)
 		if (ret === "error")
 			throw new HttpException('Error: Wrong data types.', 500)
+		console.log(ret)
 		return ret
 	}
 }
