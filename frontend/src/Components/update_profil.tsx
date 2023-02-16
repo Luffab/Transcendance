@@ -294,7 +294,7 @@ export default function Update_Profil() {
 		}
 		)
 		.then(response => {
-			setTfa(response.data.is2fa)
+			setTfa(response.data)
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {

@@ -252,7 +252,7 @@ const {socket} = useSelector((state: any) => ({
 		let url = 'http://'+ip+':3001/api/users/friends?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)
 		.then(res => {
-			setFriends(res.data.tab)
+			setFriends(res.data)
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {

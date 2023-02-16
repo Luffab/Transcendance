@@ -278,8 +278,7 @@ export class UserService{
 				tab[x] = all_users;
 				x++;
 			}
-			let friends = {tab};
-			return friends;
+			return tab;
 		}
 		catch {
 			return "error"

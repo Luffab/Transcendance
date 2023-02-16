@@ -59,6 +59,7 @@ export default function Profile() {
 	const [is_usr_waiting_friend, setUsrWaitFriend] = useState(false)
 	const [game_history, setGameHistory] = useState<historyDTO[]>([])
 	const [mouse_over_user, setMouse_over_user] = useState({id:-1, type:""})
+	const [isuser, setIsUser] = useState(true)
 	const {ip} = useSelector((state: any) => ({
 		...state.ConfigReducer
 	}))
@@ -142,9 +143,11 @@ export default function Profile() {
 		let url = 'http://'+ip+':3001/api/users/user_information?token='+localStorage.getItem("token_transcandence")+'&id='+id;
 		axios.get(url)
 		.then(res => {
+			setIsUser(true)
 			setUser_info(res.data)
 		})
 		.catch((error) =>{
+			setIsUser(false)
 			toast.error(error.response.data.message, {
 				position: "bottom-right",
 				autoClose: 3000,
@@ -182,7 +185,6 @@ export default function Profile() {
 		let url = 'http://'+ip+':3001/api/users/get_game_history?token='+localStorage.getItem("token_transcandence")+'&id='+id;
 		axios.get(url)
 		.then(res => {
-			console.log(res)
 			setGameHistory(res.data)
 		})
 		.catch((error) =>{
@@ -333,7 +335,7 @@ export default function Profile() {
         return (
         <>
 		{
-			id && !error &&
+			isuser === true &&
 			(
 				<section>
 					{
@@ -489,8 +491,20 @@ export default function Profile() {
 		</MDBContainer>
 
 		</section>
-			) || !id && !error && (<>No id</>) || error && (<>{error}</>)
+			) || isuser === false && (<h1>Access Forbidden</h1>)
 		}
+		<ToastContainer
+			position="bottom-right"
+			autoClose={3000}
+			hideProgressBar={false}
+			newestOnTop={false}
+			closeOnClick
+			rtl={false}
+			pauseOnFocusLoss
+			draggable
+			pauseOnHover
+			theme="light"
+		/>
         </>
         );
   }

@@ -13,12 +13,12 @@ export class GameController {
     async privategame(@Query() query: {token: string}) {
         let decoded = await this.gameService.validateUser(query.token)
         if (decoded === "error")
-            throw new HttpException('Error: Wrong data types.', 500)
+            throw new HttpException('Error: Wrong data types.', 400)
         if (!decoded)
-            throw new HttpException('Error: You are not authentified.', 500)
+            throw new HttpException('Error: You are not authentified.', 400)
         let ret = await this.gameService.getGameInvitation(decoded.ft_id)
         if (ret === "error")
-            throw new HttpException('Error: Wrong data types.', 500)
+            throw new HttpException('Error: Wrong data types.', 400)
         return ret
     }
 
@@ -26,16 +26,16 @@ export class GameController {
     async deletegame(@Body() body: deleteGameDTO) {
         let decoded = await this.gameService.validateUser(body.token)
         if (decoded === "error")
-            throw new HttpException('Error: Wrong data types.', 500)
+            throw new HttpException('Error: Wrong data types.', 400)
         if (!decoded)
-            throw new HttpException('Error: You are not authentified.', 500)
+            throw new HttpException('Error: You are not authentified.', 400)
         if (await this.gameService.inviteExists(body.sender_id, decoded.ft_id) === "error")
-            throw new HttpException('Error: Wrong data types.', 500)
+            throw new HttpException('Error: Wrong data types.', 400)
         if (await this.gameService.inviteExists(body.sender_id, decoded.ft_id) === false)
-            throw new HttpException("Error: This invitation doesn't exist.", 500)
+            throw new HttpException("Error: This invitation doesn't exist.", 400)
         let ret = await this.gameService.deleteGameInvitation(body.sender_id, decoded.ft_id)
         if (ret === "error")
-            throw new HttpException('Error: Wrong data types.', 500)
+            throw new HttpException('Error: Wrong data types.', 400)
         return ret
     }
 }

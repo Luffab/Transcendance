@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards, Post, UnauthorizedException, Body, Put, Param, VersioningOptions } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards, Post, UnauthorizedException, Body, Put, Param, VersioningOptions, HttpException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response, Request } from 'express';
 import { get } from 'http';
@@ -27,7 +27,7 @@ export class AuthController {
 
 	@Get('redirect')
 	@UseGuards(FTAuthGuard)
-	redirect(@Res() res: Response, @Req() req: Request) {
+	async redirect(@Res() res: Response, @Req() req: Request) {
 		let jwt = require('jwt-simple');
 		let reqq = JSON.parse(JSON.stringify(req.user));
 		let secret = process.env.JWT_SECRET;
@@ -45,8 +45,9 @@ export class AuthController {
 		let token = jwt.encode(payload, secret);
 		let token_2fa = jwt.encode(payload2, secret2)
 		if (reqq.is2fa === true) {
-			this.authenticationService.generatefirst2fa(reqq.ft_id, reqq.email)
-			res.redirect(process.env.FT_REDIRECT_URL + "?jwt=" + token_2fa + "&tfa=true" + "&email=" + reqq.email + "&recup=" + reqq.recup_emails);
+			let ret = await this.authenticationService.generatefirst2fa(reqq.ft_id, reqq.email)
+			if (ret !== "error")
+				res.redirect(process.env.FT_REDIRECT_URL + "?jwt=" + token_2fa + "&tfa=true" + "&email=" + reqq.email + "&recup=" + reqq.recup_emails);
 		}
 		else
 			res.redirect(process.env.FT_REDIRECT_URL + "?jwt=" + token + "&tfa=false");
@@ -56,29 +57,37 @@ export class AuthController {
 
 	@Post('verify_code')
 	async verifycode(@Body() body: VerifyCodeDTO) {
-		return await this.authenticationService.verifyCode(body)
-	}
-
-	@Get('logout')
-  	@UseGuards(AuthenticatedGuard)
-  	logout(@Req() req: Request) {
-    	//req.logOut();
-  	}
-
-	@Get('after_2fa')
-	@UseGuards(AuthenticatedGuard)
-	redirectafeter2fa() {
-		
+		let ret = await this.authenticationService.verifyCode(body)
+		if (ret === "bad token")
+			throw new HttpException('Error: You are not authentified.', 400)
+		if (ret === "bad code")
+			throw new HttpException('Error: Bad Code.', 400)
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types.', 400)
+		return ret
 	}
 
 	@Post('2fa/recup')
-	generate(@Body() body: RecupDTO) {
-	 	return this.authenticationService.generate2fa(body)
+	async generate(@Body() body: RecupDTO) {
+	 	let ret = await this.authenticationService.generate2fa(body)
+		if (ret === "bad token")
+			throw new HttpException('Error: You are not authentified.', 400)
+		if (ret === "no2fa")
+			throw new HttpException('Error: You have no 2fa.', 400)
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types.', 400)
 	}
 
 	@Post('2fa/change')
 	async change2fa(@Body() body: TfaDTO) {
-		return await this.authenticationService.changeTfa(body);
+		let ret = await this.authenticationService.changeTfa(body);
+		if (ret === "error")
+			throw new HttpException('Error: Wrong data types.', 400)
+		if (ret === "bad token")
+			throw new HttpException('Error: You are not authentified.', 400)
+		if (ret === "No backup")
+			throw new HttpException('Error: Wrong data types.', 400)
+		return ret
 	}
 }
 
