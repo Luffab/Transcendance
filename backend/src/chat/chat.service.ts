@@ -390,13 +390,13 @@ export class ChatService {
 			let unmute_time = await this.userinchanRepo.findOne({
 				select: {unmute_time: true},
 				where: { chanid: chanId, user_id: userId }})
-			//console.log("unmute time = ", unmute_time.unmute_time)
-			//console.log("unmute time in seconds = ", unmute_time.unmute_time/1000)
+			console.log("unmute time = ", unmute_time.unmute_time)
+			console.log("unmute time in seconds = ", unmute_time.unmute_time/1000)
 			if (unmute_time.unmute_time > (now/1000)) {
-				//console.log("is muted")
+				console.log("is muted")
 				return true
 			}
-			//console.log("is not muted")
+			console.log("is not muted")
 			return false
 		}
 		catch {return "error"}
