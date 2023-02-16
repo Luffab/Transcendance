@@ -895,6 +895,7 @@ export class ChatService {
 					channelType: channelToLeave.channel_type,
 					ownerLeft: true,
 				}
+				await this.userinchanRepo.delete({chanid: chanId})
 				await this.chanRepo.delete({id: chanId})
 				return ret2
 			}
