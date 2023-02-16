@@ -182,6 +182,7 @@ export default function Profile() {
 		let url = 'http://'+ip+':3001/api/users/get_game_history?token='+localStorage.getItem("token_transcandence")+'&id='+id;
 		axios.get(url)
 		.then(res => {
+			console.log(res)
 			setGameHistory(res.data)
 		})
 		.catch((error) =>{

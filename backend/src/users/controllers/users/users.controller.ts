@@ -222,6 +222,7 @@ export class UsersController {
 		if (await this.usersService.userExists(query.id) === false)
 			throw new HttpException('Error: User does not exist.', 500);
 		let ret = await this.usersService.getGameHistory(query.id)
+		console.log("GAME = ", ret)
 		if (ret === "error")
 			throw new HttpException('Error: Wrong data types.', 500)
 		return ret

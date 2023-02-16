@@ -545,27 +545,17 @@ export class UserService{
 				let opponent = await this.userRepo.findOne({
 					where: {ft_id: user[i].vs_id}
 				})
-				let tab = []
-				for (let i = 0; i < user.length; i++) {
-					let opponent = await this.userRepo.findOne({
-						where: {ft_id: user[i].vs_id}
-					})
-					let json = {
-						"p1Score": user[i].p1Score,
-						"p2Score": user[i].p2Score,
-						"is_win": user[i].is_win,
-						"mode": user[i].mode,
-						"opp_username": opponent.username,
-						"opp_id": opponent.ft_id
-					}
-					tab.push(json)
+				let json = {
+					"p1Score": user[i].p1Score,
+					"p2Score": user[i].p2Score,
+					"is_win": user[i].is_win,
+					"mode": user[i].mode,
+					"opp_username": opponent.username,
+					"opp_id": opponent.ft_id
 				}
-				let res = []
-				for (let i = tab.length - 1; i >= 0; i--) {
-					res.push(tab[i])
-				}
-				return tab
+				tab.push(json)
 			}
+			return tab
 		}
 		catch {
 			return "error"
