@@ -225,6 +225,7 @@ export class UsersController {
 		console.log("GAME = ", ret)
 		if (ret === "error")
 			throw new HttpException('Error: Wrong data types.', 500)
+		console.log(ret)
 		return ret
 	}
 }
