@@ -161,7 +161,6 @@ export class AuthService {
 			if (!usernametoken)
 				return "bad token"
 			let userz = await this.userRepo.findOne({ where: {ft_id: usernametoken.ft_id } })
-			console.log(usernametoken.ft_id)
 			if (userz.is2fa === true) {
 				let random = generateRandomString(6);
 				await this.mailService.sendUserConfirmation(body.email, random);
@@ -171,7 +170,6 @@ export class AuthService {
     				.set({ verify_code: random })
     				.where("ft_id= :id", { id: usernametoken.ft_id })
     				.execute()
-				console.log()
 				return
 			}
 			return "no2fa"

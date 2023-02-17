@@ -67,7 +67,7 @@ export class UsersController {
 
 	@Get('user_information')
 	async getUsersInfo(@Query() query: { token: string, id: string }) {
-		console.log(query)
+
 		let decoded = await this.usersService.validateUser(query.token)
 		if (decoded === "error")
 			throw new HttpException('Error: Wrong data types.', 400)
@@ -76,7 +76,6 @@ export class UsersController {
 		if (await this.usersService.userExists(query.id) === "error")
 			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.usersService.userExists(query.id) === false) {
-			console.log("COUCOU")
 			throw new HttpException('Error: User does not exist.', 400);
 		}
 		let user = await this.usersService.getUsersInfos(query.id);
@@ -224,10 +223,8 @@ export class UsersController {
 		if (await this.usersService.userExists(query.id) === false)
 			throw new HttpException('Error: User does not exist.', 400);
 		let ret = await this.usersService.getGameHistory(query.id)
-		console.log("GAME = ", ret)
 		if (ret === "error")
 			throw new HttpException('Error: Wrong data types.', 400)
-		console.log(ret)
 		return ret
 	}
 }

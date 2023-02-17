@@ -43,7 +43,7 @@ export default function Private_Pong() {
 	const queryParameters = new URLSearchParams(window.location.search)
     let mode = queryParameters.get("mode")
 
-	var [is_playing, setIsPlaying] = useState(false)
+	let is_playing = false
 	const [PLAYER_HEIGHT, setHeight] = useState(0)
 	const [PLAYER_WIDTH, setWidth] = useState(0)
 
@@ -157,13 +157,16 @@ export default function Private_Pong() {
 			context.stroke();
 			
 			// Draw players
-			context.fillStyle = 'white';
 			if (game.side.value === "left") {
+				context.fillStyle = '#67FF49';
 				context.fillRect(0, game.player.y, PLAYER_WIDTH, PLAYER_HEIGHT);
+				context.fillStyle = 'red';
 				context.fillRect(canvas.width - PLAYER_WIDTH, player2Y, PLAYER_WIDTH, PLAYER_HEIGHT);
 			}
 			else if (game.side.value === "right") {
+				context.fillStyle = 'red';
 				context.fillRect(0, player2Y, PLAYER_WIDTH, PLAYER_HEIGHT);
+				context.fillStyle = '#67FF49';
 				context.fillRect(canvas.width - PLAYER_WIDTH, game.player.y, PLAYER_WIDTH, PLAYER_HEIGHT);
 			}
 		
@@ -212,6 +215,7 @@ export default function Private_Pong() {
 		}
 
 		const play = (data: gameDataDTO) => {
+			is_playing = true
 			draw(data.pY, data.ballX, data.ballY, data.ballR);
 			(document.querySelector('#player-score') as HTMLInputElement).textContent = data.p1Score;
 			(document.querySelector('#player2-score') as HTMLInputElement).textContent = data.p2Score;
@@ -365,10 +369,9 @@ export default function Private_Pong() {
 	function canplay () {
 		if (canvasRef.current)
 			canvas = canvasRef.current;
-		reset()
-
 		// Mouse click event
 		if (is_playing === false) {
+			reset()
 			let details = {
 				jwt: localStorage.getItem("token_transcandence"),
 				socketId: socket.id

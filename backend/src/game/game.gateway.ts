@@ -55,6 +55,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		private readonly userService: UserService,
 	) {}
 	private gameIntervals: Map<number, NodeJS.Timer>= new  Map<number, NodeJS.Timer>()
+	private isReady: Map<string, boolean>= new  Map<string, boolean>()
 
 	async sendErrorMessage(socket: string, event: string, error: string) {
 		this.server.to(socket).emit(event, error)
@@ -66,11 +67,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			i = self.gameService.getGameIndexFromSocket(p2Socket)
 		let p1 = self.gameService.getPlayer1(i);
 		let p2 = self.gameService.getPlayer2(i);
-		//console.log("game[" + i + "] state = ", self.gameService.getGameState(i))
 		if (self.gameService.getGameState(i) === "on") {
 			self.gameService.moveBall(i)
-			//let dataToP1 = self.gameService.getDataForP1(i)
-			//let dataToP2 = self.gameService.getDataForP2(i)
 			self.server.to(p1Socket).emit("dataTransfer", self.gameService.getDataForP1(i))
 			self.server.to(p2Socket).emit("dataTransfer", self.gameService.getDataForP2(i))
 			if (self.gameService.hasSpectators(i) === true)
@@ -95,10 +93,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				if (self.gameService.hasSpectators(i) === true) {
 					self.server.to(self.gameService.getSpectatorsSockets(i)).emit("winTransfer", "player2")
 				}
-				//if (self.gameService.hasSpectators(i) === true) {
-				//	//let dataToSpecs = self.gameService.getDataForSpecs(i)
-				//	self.server.to(self.gameService.getSpectatorsSockets(i)).emit("killedGame", "player2")
-				//}
 			}
 			if (leaver === self.gameService.getPlayer2(i)) {
 				console.log("PLAYER 2 STOPPED")
@@ -115,10 +109,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				if (self.gameService.hasSpectators(i) === true) {
 					self.server.to(self.gameService.getSpectatorsSockets(i)).emit("winTransfer", "player1")
 				}
-				//if (self.gameService.hasSpectators(i) === true) {
-				//	//let dataToSpecs = self.gameService.getDataForSpecs(i)
-				//	self.server.to(self.gameService.getSpectatorsSockets(i)).emit("killedGame", "player1")
-				//}
 			}
 			clearInterval(self.gameIntervals.get(gameId))
 			self.gameService.finishGame(i)
@@ -161,10 +151,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 					console.log("PLAYER2 WIN")
 					self.server.to(self.gameService.getSpectatorsSockets(i)).emit("winTransfer", "player2")
 				}
-				//if (self.gameService.hasSpectators(i) === true) {
-				//	//let dataToSpecs = self.gameService.getDataForSpecs(i)
-				//	self.server.to(self.gameService.getSpectatorsSockets(i)).emit("killedGame", "player1")
-				//}
 			}
 			clearInterval(self.gameIntervals.get(gameId))
 			self.gameService.finishGame(i)
@@ -180,6 +166,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (this.sendErrorMessage(socket.id, "receiveErrorGlobal", "Error: Wrong data types."))
 		if (!decoded)
 			return (this.sendErrorMessage(socket.id, "receiveErrorGlobal", "Error: You are not authentified."))
+		this.isReady.delete(decoded.ft_id)
 		let i = this.gameService.getGameIndexFromSocket(socket.id)
 		if (i === -1)
 			return (this.sendErrorMessage(socket.id, "receiveErrorGlobal", "Error: Game does not exist."))
@@ -196,8 +183,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return ;
 		}
 		let ret = await this.gameService.setPlayersStatus(i, "Online")
-		//if (ret === "error")
-		//	return (this.sendErrorMessage(socket.id, "receiveErrorGlobal", "Error: Wrong data types."))
 		this.gameService.setGameState(i, "toBeStopped")
 		let user = this.gameService.getUserIDFromSocket(i, socket.id)
 		this.gameService.setLeaver(i, user)
@@ -234,6 +219,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			if (ret === "error")
 				return (this.sendErrorMessage(socket.id, "receiveErrorPublic", "Error: Wrong data types."))
 			this.server.to(socket.id).emit("rightOrLeft", "left")
+			this.server.to(socket.id).emit("matchOK", "You are now placed in the matchmaking queue !")
 		}
 		else {
 			let ret2 = await this.gameService.joinGame(decoded.ft_id, socket.id)
@@ -303,16 +289,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				this.server.to(socket.id).emit("rightOrLeft", "left")
 			else
 				this.server.to(socket.id).emit("rightOrLeft", "right")
+			console.log(decoded.ft_id + " is ready")
+			this.isReady.set(decoded.ft_id, true)
 			this.gameService.setGameState(i, "waitingFor1Ready")
 		}
 		else if (this.gameService.getGameState(i) === "waitingFor1Ready") {
+			if (this.isReady.get(decoded.ft_id) === true) {
+				console.log(decoded.ft_id + " is ready : " + this.isReady.get(decoded.ft_id))
+				return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: You are already in ready."))
+			}
+			this.isReady.delete(this.gameService.getPlayer1(i))
+			this.isReady.delete(this.gameService.getPlayer2(i))
 			if (this.gameService.isPlayer1(i, decoded.ft_id) === true)
 				this.server.to(socket.id).emit("rightOrLeft", "left")
 			else
 				this.server.to(socket.id).emit("rightOrLeft", "right")
+			console.log(decoded.ft_id + " is ready")
 			let ret = await this.gameService.setPlayersStatus(i, "In Game")
 			if (ret === "error")
 				return (this.sendErrorMessage(socket.id, "receiveErrorPrivate", "Error: Wrong data types."))
+			this.isReady.set(decoded.ft_id, true)
 			let p1Socket = this.gameService.getP1Socket(i)
 			let p2Socket = this.gameService.getP2Socket(i)
 			this.gameService.setGameState(i, "on")
@@ -320,6 +316,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			let self = this
 			let tmpIntervalId = setInterval(this.keepPlaying, 10, self, p1Socket, p2Socket)
 			let tmpGameId = this.gameService.getGameIdFromSocket(p1Socket)
+			
 			this.gameIntervals.set(tmpGameId, tmpIntervalId)
 		}
 		this.gameService.printArray()
@@ -373,6 +370,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				return
 			if (!decoded)
 				return
+			this.isReady.delete(decoded.ft_id)
 			let i = this.gameService.getGameIndexFromSpecSocket(client.id)
 			if (i != -1)
 				this.gameService.removeSpectator(i, decoded.ft_id, client.id)
