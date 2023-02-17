@@ -28,6 +28,9 @@ export default function Update_Profil() {
 	const {ip} = useSelector((state: any) => ({
 		...state.ConfigReducer
 	}))
+	const {socket} = useSelector((state: any) => ({
+        ...state.ConfigReducer
+      }))
 	const dispatch = useDispatch();
 	useEffect(() => {
 		  dispatch(
@@ -354,6 +357,7 @@ export default function Update_Profil() {
 			const file = e.target.files[0];
 			let base64: any
 			base64 = await convertToBase64(file);
+			console.log(base64)
 			if (base64.length < MAXLENGTH_PICTURE) {
 				setTmpAvatar(avatar)
 				setAvatar(base64);
@@ -361,6 +365,26 @@ export default function Update_Profil() {
 			}
 		}
 	  };
+
+	  const errorMessage = (newMessage: string) => {
+		toast.error(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+	}
+
+	useEffect(() => {
+		socket?.on("receiveError", errorMessage)
+		return () => {
+			socket?.off("receiveError", errorMessage)
+		}
+	}, [errorMessage])
 
 	  useEffect(() => {
 		user(),

@@ -248,6 +248,26 @@ const {socket} = useSelector((state: any) => ({
 		}
 	}, [friendListener])
 
+	const errorMessage = (newMessage: string) => {
+		toast.error(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+	}
+
+	useEffect(() => {
+		socket?.on("receiveError", errorMessage)
+		return () => {
+			socket?.off("receiveError", errorMessage)
+		}
+	}, [errorMessage])
+
 	const getFriends = () => {
 		let url = 'http://'+ip+':3001/api/users/friends?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)

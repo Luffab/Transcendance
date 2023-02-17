@@ -301,7 +301,14 @@ export default function Private_Pong() {
 		}
 	}
 
-	const errorPrivate = (newMessage: string) => {
+	useEffect(() => {
+		socket?.on("winTransfer", endGame)
+		return () => {
+			socket?.off("winTransfer", endGame)
+		}
+	}, [endGame])
+
+	const errorMessage = (newMessage: string) => {
 		toast.error(newMessage, {
 			position: "bottom-right",
 			autoClose: 3000,
@@ -315,18 +322,11 @@ export default function Private_Pong() {
 	}
 
 	useEffect(() => {
-		socket?.on("winTransfer", endGame)
+		socket?.on("receiveError", errorMessage)
 		return () => {
-			socket?.off("winTransfer", endGame)
+			socket?.off("receiveError", errorMessage)
 		}
-	}, [endGame])
-
-	useEffect(() => {
-		socket?.on("receiveErrorPrivate", errorPrivate)
-		return () => {
-			socket?.off("receiveErrorPrivate", errorPrivate)
-		}
-	}, [errorPrivate])
+	}, [errorMessage])
 
 	const killedGame = () => {
 		swal({

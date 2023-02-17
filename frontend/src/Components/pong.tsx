@@ -324,7 +324,7 @@ export default function Pong() {
 		}
 	}
 
-	const errorPrivate = (newMessage: string) => {
+	const errorMessage = (newMessage: string) => {
 		toast.error(newMessage, {
 			position: "bottom-right",
 			autoClose: 3000,
@@ -338,11 +338,11 @@ export default function Pong() {
 	}
 
 	useEffect(() => {
-		socket?.on("receiveErrorPublic", errorPrivate)
+		socket?.on("receiveError", errorMessage)
 		return () => {
-			socket?.off("receiveErrorPublic", errorPrivate)
+			socket?.off("receiveError", errorMessage)
 		}
-	}, [errorPrivate])
+	}, [errorMessage])
 
 	const cGood = (newMessage: string) => {
 		toast.success(newMessage, {

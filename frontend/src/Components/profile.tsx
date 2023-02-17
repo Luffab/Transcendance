@@ -323,6 +323,26 @@ export default function Profile() {
 		}
 	}, [removeFriendRequest])
 
+	const errorMessage = (newMessage: string) => {
+		toast.error(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+	}
+
+	useEffect(() => {
+		socket?.on("receiveError", errorMessage)
+		return () => {
+			socket?.off("receiveError", errorMessage)
+		}
+	}, [errorMessage])
+
 	useEffect(() => {
 		user(),
 		decodeToken(),

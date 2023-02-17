@@ -22,6 +22,9 @@ const {ip} = useSelector((state: any) => ({
   const [email_tfa, setEmail_tfa] = useState("{Mail non renseigné}");
   const [token_tfa, setToken_tfa] = useState("");
   const [code_tfa, setCode_tfa] = useState("");
+  const {socket} = useSelector((state: any) => ({
+    ...state.ConfigReducer
+  }))
   useEffect(() => {
     const queryParameters = new URLSearchParams(window.location.search)
     const tfa = queryParameters.get("tfa")
@@ -124,6 +127,27 @@ const {ip} = useSelector((state: any) => ({
 				});
 		})
   }
+
+  const errorMessage = (newMessage: string) => {
+		toast.error(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+	}
+
+	useEffect(() => {
+		socket?.on("receiveError", errorMessage)
+		return () => {
+			socket?.off("receiveError", errorMessage)
+		}
+	}, [errorMessage])
+
   return (
     <>
       {
