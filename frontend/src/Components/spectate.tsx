@@ -35,6 +35,26 @@ export default function Spectate() {
 			  })
 	  }, [])
 
+	 const receiveNotif = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("notification", receiveNotif)
+		return () => {
+			socket?.off("notification", receiveNotif)
+		}
+	}, [receiveNotif])
+
 
 	var canvasRef = useRef<HTMLCanvasElement>(null);
 	var canvas: HTMLCanvasElement;

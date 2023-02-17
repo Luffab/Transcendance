@@ -26,6 +26,27 @@ export interface winDataDTO {
 
 export default function Pong() {
 
+
+	const receiveNotif = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("notification", receiveNotif)
+		return () => {
+			socket?.off("notification", receiveNotif)
+		}
+	}, [receiveNotif])
+
 	const {socket} = useSelector((state: any) => ({
         ...state.ConfigReducer
       }))

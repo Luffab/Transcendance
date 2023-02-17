@@ -28,6 +28,9 @@ export default function Update_Profil() {
 	const {ip} = useSelector((state: any) => ({
 		...state.ConfigReducer
 	}))
+	const {socket} = useSelector((state: any) => ({
+        ...state.ConfigReducer
+      }))
 	const dispatch = useDispatch();
 	useEffect(() => {
 		  dispatch(
@@ -36,6 +39,27 @@ export default function Update_Profil() {
 				  actual_page: "update_profil"
 			  })
 	  }, [])
+
+	const receiveNotif = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("notification", receiveNotif)
+		return () => {
+			socket?.off("notification", receiveNotif)
+		}
+	}, [receiveNotif])
+
 	const user = () => {
 		let url = 'http://'+ip+':3001/api/users/my_info?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)
