@@ -1,5 +1,5 @@
 import {createStore, combineReducers} from 'redux'
-import ConfigReducer from './reducers/config.tsx';
+import ConfigReducer from './reducers/config';
 const rootReducer = combineReducers({
   ConfigReducer,
 })

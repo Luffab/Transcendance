@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import React from 'react'
 import { useSelector, useDispatch } from "react-redux";
 import swal from 'sweetalert';
 import { ToastContainer, toast } from "react-toastify";
@@ -417,7 +416,7 @@ export default function Pong() {
             					<button id="start-game" className="btn btn-primary" onClick={()=>{canplay()}}>Demarrer</button>
         					</li>
     					</ul>
-    		<canvas id="canvas" width={900} height={450} style={{width: "50%", height: "auto"}} ref={canvasRef}></canvas>
+    		<canvas id="canvas" width={900} height={450} style={{width: "50%", height: "50%"}} ref={canvasRef}></canvas>
 		</div>
 	<ToastContainer
 			position="bottom-right"

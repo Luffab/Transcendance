@@ -30,6 +30,8 @@ import { InvitedModule } from './invited/invited.module';
 				//entities: [User, Channels, Messages, UsersInChan],
 				autoLoadEntities: true,
 				synchronize: true,
+				port: 5432,
+				keepConnectionAlive: true,
 			}),
 	  		AuthModule, 
 			UsersModule,

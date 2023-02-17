@@ -1,21 +1,20 @@
 import Container from 'react-bootstrap/Container';
-import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate, Outlet, Link } from "react-router-dom";
-import Welcome from "./Components/welcome.tsx";
-import Home from "./Components/home.tsx";
-import Update_profil from "./Components/update_profil.tsx";
-import Pong from "./Components/pong.tsx";
-import Chat from "./Components/chat.tsx";
-import Private_Pong from './Components/private_pong.tsx'
-import Spectate from './Components/spectate.tsx'
-import Profile from './Components/profile.tsx';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Welcome from "./Components/welcome";
+import Home from "./Components/home";
+import Update_profil from "./Components/update_profil";
+import Pong from "./Components/pong";
+import Chat from "./Components/chat";
+import Private_Pong from './Components/private_pong'
+import Spectate from './Components/spectate'
+import Profile from './Components/profile';
 import { Provider } from 'react-redux'
-import store from './redux/store.tsx'
-import Navbar from "./Containers/navbar.tsx";
+import store from './redux/store'
+import Navbar from "./Containers/navbar";
 import { CookiesProvider } from 'react-cookie';
-import { RequireAuthentification, RequireNoAuthentification, RequireAuthentificationContainer } from './helpers/functions.tsx'
-import Not_found from './Components/not_found.tsx'
+import { RequireAuthentification, RequireNoAuthentification, RequireAuthentificationContainer } from './helpers/functions'
+import Not_found from './Components/not_found'
 
 const queryParameters = new URLSearchParams(window.location.search);
 

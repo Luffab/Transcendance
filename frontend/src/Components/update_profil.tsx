@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useSelector, useDispatch } from 'react-redux';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import React from 'react'
+
 
 const MAXLENGTH_USERNAME = 20;
 const MAXLENGTH_PICTURE = 10485760;

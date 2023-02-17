@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react"
 import {Button, ButtonGroup} from 'react-bootstrap';
-import Groups_messages from '../Containers/groups_messages.tsx'
-import Privates_messages from '../Containers/privates_messages.tsx'
+import Groups_messages from '../Containers/groups_messages'
+import Privates_messages from '../Containers/privates_messages'
 import { useSelector, useDispatch } from 'react-redux';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import React from 'react'
 
-import Toast from 'react-bootstrap/Toast';
 export default function Chat() {
 	const dispatch = useDispatch();
 	const [type_message_selected, setType_message_selected] = useState("group_channel");

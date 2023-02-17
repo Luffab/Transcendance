@@ -7,6 +7,31 @@ export class UsersController {
 	constructor(
 	private readonly usersService: UserService) {}
 
+	isImage(data: string){
+		let knownTypes: any = {
+		  '/': 'data:image/jpeg;base64,',
+		  'i': 'data:image/png;base64,',
+		}
+		  
+		let image = new Image()
+		
+		let i = data.search(",")
+		if(!knownTypes[data[i + 1]]) {
+			return false;
+		}
+		else {
+			image.src = knownTypes[0]+data
+			image.onload = function(){
+			  //This should load the image so that you can actually check
+			  //height and width.
+			  if(image.height === 0 || image.width === 0){
+				return false;
+			  }
+		  	}
+		  return true;
+		}
+	}
+
 	@Post('change_avatar')
 	async modifyImage(@Body() body: ImageDTO) {
 		if (typeof(body.image) != "string")
@@ -18,6 +43,8 @@ export class UsersController {
 			throw new HttpException('Error: You are not authentified.', 400)
 		if (body.image.length > 10485760)
 			throw new HttpException('Error: Image is too large.', 400)
+		if (!this.isImage(body.image))
+			throw new HttpException('Error: Bad Type for Image', 400)
 		let ret = await this.usersService.changeImage(decoded.ft_id, body.image);
 		if (ret === "error")
 			throw new HttpException('Error: Wrong data types.', 400)
