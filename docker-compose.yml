@@ -5,11 +5,9 @@ services:
     restart: always
     env_file:
       - .env
-    expose:
-      - "5432"
-    networks:
-      - backend
-
+    #volumes: 
+    #  - db:/var/lib/postgresql/data
+    #  - ./init.sql:/docker-entrypoint-initdb.d/create_tables.sql
   adminer:
     image: michalhosna/adminer
     container_name: adminer
@@ -21,9 +19,6 @@ services:
       - ADMINER_DB=${POSTGRES_DB}
     ports:
       - "8080:8080"
-    networks:
-      - backend
-
   back:
     build:
       context: ./backend
@@ -31,38 +26,20 @@ services:
       target: dev
     env_file:
       - .env
-    expose:
-      - "3001"
     ports:
       - 3001:3001
-    volumes:
-      - ./backend/src:/app/src
     depends_on:
       - postgres
-    networks:
-      - backend
-      - frontend
-
   front:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
      - 3000:3000
-    volumes:
-      - ./frontend/src:/usr/src/app/my-app/src
     depends_on:
-     - back
-    networks:
-      - frontend
+     - postgres
 
 
 volumes:
   db:
     driver: local
-
-networks:
-  frontend:
-    name: frontend
-  backend:
-    name: backend

@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios'
@@ -8,7 +8,7 @@ import Button from 'react-bootstrap/Button';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import logo from '../42_Logo.png'
-import React from 'react'
+
 
 export default function Welcome() {
   const navigate = useNavigate();

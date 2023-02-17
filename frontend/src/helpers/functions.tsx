@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import io from "socket.io-client"
-
-import { BrowserRouter, Routes, Route, Navigate, Outlet, Link } from "react-router-dom";
+import { Route, Navigate } from "react-router-dom";
 
 export const get_my_token_from_document = ( my_token:string ) =>{
     let tokens=document.cookie.split(';')

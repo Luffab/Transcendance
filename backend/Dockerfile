@@ -1,3 +1,4 @@
+
 FROM node:latest as base
 
 WORKDIR /app
@@ -5,13 +6,16 @@ WORKDIR /app
 
 FROM base as dev
 
-COPY package.json .
-COPY tsconfig.json .
-COPY entry.sh .
+#COPY package.json .
+#COPY tsconfig.json .
+#COPY entry.sh .
+COPY . .
 
 RUN npm i
+COPY . .
+CMD ["npm", "run", "start:dev"]
 #RUN node --max-old-space-size=4096 `which npm` install
-ENTRYPOINT [ "bash", "entry.sh" ]
+#ENTRYPOINT [ "bash", "entry.sh" ]
 
 #FROM base as prod
 #RUN npm ci

@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import Table from 'react-bootstrap/Table';
 import { MDBInput } from 'mdb-react-ui-kit';
-import React from 'react'
+
 
 const MAXLENGTH_PASSWORD = 20;
 const MAXLENGTH_MESSAGE = 1000;
