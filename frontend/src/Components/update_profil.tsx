@@ -40,26 +40,6 @@ export default function Update_Profil() {
 			  })
 	  }, [])
 
-	const receiveNotif = (newMessage: string) => {
-		toast.success(newMessage, {
-			position: "bottom-right",
-			autoClose: 3000,
-			hideProgressBar: false,
-			closeOnClick: true,
-			pauseOnHover: true,
-			draggable: true,
-			progress: undefined,
-			theme: "light",
-			});
-
-	}
-	useEffect(() => {
-		socket?.on("notification", receiveNotif)
-		return () => {
-			socket?.off("notification", receiveNotif)
-		}
-	}, [receiveNotif])
-
 	const user = () => {
 		let url = 'http://'+ip+':3001/api/users/my_info?token='+localStorage.getItem("token_transcandence");
 		axios.get(url)
@@ -378,6 +358,7 @@ export default function Update_Profil() {
 			const file = e.target.files[0];
 			let base64: any
 			base64 = await convertToBase64(file);
+			console.log(base64)
 			if (base64.length < MAXLENGTH_PICTURE) {
 				setTmpAvatar(avatar)
 				setAvatar(base64);
@@ -386,10 +367,71 @@ export default function Update_Profil() {
 		}
 	  };
 
+	  const errorMessage = (newMessage: string) => {
+		toast.error(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+	}
+
+	useEffect(() => {
+		socket?.on("receiveError", errorMessage)
+		return () => {
+			socket?.off("receiveError", errorMessage)
+		}
+	}, [errorMessage])
+
+	const receiveSuccess = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("success", receiveSuccess)
+		return () => {
+			socket?.off("success", receiveSuccess)
+		}
+	}, [receiveSuccess])
+
+	const receiveNotif = (newMessage: string) => {
+		toast(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("notification", receiveNotif)
+		return () => {
+			socket?.off("notification", receiveNotif)
+		}
+	}, [receiveNotif])
+
 	  useEffect(() => {
 		user(),
 		users_blocked()
 	}, [])
+
     return (
 		<>
         <h1 style={{textAlign: 'center'}}>Modifier mon profil</h1>

@@ -26,27 +26,6 @@ export interface winDataDTO {
 
 export default function Pong() {
 
-
-	const receiveNotif = (newMessage: string) => {
-		toast.success(newMessage, {
-			position: "bottom-right",
-			autoClose: 3000,
-			hideProgressBar: false,
-			closeOnClick: true,
-			pauseOnHover: true,
-			draggable: true,
-			progress: undefined,
-			theme: "light",
-			});
-
-	}
-	useEffect(() => {
-		socket?.on("notification", receiveNotif)
-		return () => {
-			socket?.off("notification", receiveNotif)
-		}
-	}, [receiveNotif])
-
 	const {socket} = useSelector((state: any) => ({
         ...state.ConfigReducer
       }))
@@ -345,7 +324,7 @@ export default function Pong() {
 		}
 	}
 
-	const errorPrivate = (newMessage: string) => {
+	const errorMessage = (newMessage: string) => {
 		toast.error(newMessage, {
 			position: "bottom-right",
 			autoClose: 3000,
@@ -359,11 +338,51 @@ export default function Pong() {
 	}
 
 	useEffect(() => {
-		socket?.on("receiveErrorPublic", errorPrivate)
+		socket?.on("receiveError", errorMessage)
 		return () => {
-			socket?.off("receiveErrorPublic", errorPrivate)
+			socket?.off("receiveError", errorMessage)
 		}
-	}, [errorPrivate])
+	}, [errorMessage])
+
+	const receiveSuccess = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("success", receiveSuccess)
+		return () => {
+			socket?.off("success", receiveSuccess)
+		}
+	}, [receiveSuccess])
+
+	const receiveNotif = (newMessage: string) => {
+		toast(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("notification", receiveNotif)
+		return () => {
+			socket?.off("notification", receiveNotif)
+		}
+	}, [receiveNotif])
 
 	const cGood = (newMessage: string) => {
 		toast.success(newMessage, {
@@ -398,7 +417,7 @@ export default function Pong() {
             					<button id="start-game" className="btn btn-primary" onClick={()=>{canplay()}}>Demarrer</button>
         					</li>
     					</ul>
-    		<canvas id="canvas" width={900} height={450} style={{width: "50%", height: "50%"}} ref={canvasRef}></canvas>
+    		<canvas id="canvas" width={900} height={450} style={{width: "50%", height: "auto"}} ref={canvasRef}></canvas>
 		</div>
 	<ToastContainer
 			position="bottom-right"

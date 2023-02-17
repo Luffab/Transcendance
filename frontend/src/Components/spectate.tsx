@@ -35,26 +35,6 @@ export default function Spectate() {
 			  })
 	  }, [])
 
-	 const receiveNotif = (newMessage: string) => {
-		toast.success(newMessage, {
-			position: "bottom-right",
-			autoClose: 3000,
-			hideProgressBar: false,
-			closeOnClick: true,
-			pauseOnHover: true,
-			draggable: true,
-			progress: undefined,
-			theme: "light",
-			});
-
-	}
-	useEffect(() => {
-		socket?.on("notification", receiveNotif)
-		return () => {
-			socket?.off("notification", receiveNotif)
-		}
-	}, [receiveNotif])
-
 
 	var canvasRef = useRef<HTMLCanvasElement>(null);
 	var canvas: HTMLCanvasElement;
@@ -173,7 +153,17 @@ export default function Spectate() {
 		}
 	}
 
-	const errorPrivate = (newMessage: string) => {
+	if (canvasRef.current)
+			canvas = canvasRef.current;
+
+	useEffect(() => {
+		socket?.on("winTransfer", endGame)
+		return () => {
+			socket?.off("winTransfer", endGame)
+		}
+	}, [endGame])
+
+	const errorMessage = (newMessage: string) => {
 		toast.error(newMessage, {
 			position: "bottom-right",
 			autoClose: 3000,
@@ -185,22 +175,53 @@ export default function Spectate() {
 			theme: "light",
 			});
 	}
-	if (canvasRef.current)
-			canvas = canvasRef.current;
 
 	useEffect(() => {
-		socket?.on("winTransfer", endGame)
+		socket?.on("receiveError", errorMessage)
 		return () => {
-			socket?.off("winTransfer", endGame)
+			socket?.off("receiveError", errorMessage)
 		}
-	}, [endGame])
+	}, [errorMessage])
 
+	const receiveSuccess = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
 	useEffect(() => {
-		socket?.on("receiveErrorPrivate", errorPrivate)
+		socket?.on("success", receiveSuccess)
 		return () => {
-			socket?.off("receiveErrorPrivate", errorPrivate)
+			socket?.off("success", receiveSuccess)
 		}
-	}, [errorPrivate])
+	}, [receiveSuccess])
+
+	const receiveNotif = (newMessage: string) => {
+		toast(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("notification", receiveNotif)
+		return () => {
+			socket?.off("notification", receiveNotif)
+		}
+	}, [receiveNotif])
 
 	useEffect(() => {
 		if (canvasRef.current)

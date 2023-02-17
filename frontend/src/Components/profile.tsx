@@ -76,26 +76,6 @@ export default function Profile() {
 			  })
 	  }, [])
 
-	const receiveNotif = (newMessage: string) => {
-		toast.success(newMessage, {
-			position: "bottom-right",
-			autoClose: 3000,
-			hideProgressBar: false,
-			closeOnClick: true,
-			pauseOnHover: true,
-			draggable: true,
-			progress: undefined,
-			theme: "light",
-			});
-
-	}
-	useEffect(() => {
-		socket?.on("notification", receiveNotif)
-		return () => {
-			socket?.off("notification", receiveNotif)
-		}
-	}, [receiveNotif])
-
 	const blockUser = () => {
 		let json = {
 			"token": localStorage.getItem("token_transcandence"),
@@ -343,6 +323,66 @@ export default function Profile() {
 			socket?.off("removeFriend", removeFriendRequest)
 		}
 	}, [removeFriendRequest])
+
+	const errorMessage = (newMessage: string) => {
+		toast.error(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+	}
+
+	useEffect(() => {
+		socket?.on("receiveError", errorMessage)
+		return () => {
+			socket?.off("receiveError", errorMessage)
+		}
+	}, [errorMessage])
+
+	const receiveSuccess = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("success", receiveSuccess)
+		return () => {
+			socket?.off("success", receiveSuccess)
+		}
+	}, [receiveSuccess])
+
+	const receiveNotif = (newMessage: string) => {
+		toast(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("notification", receiveNotif)
+		return () => {
+			socket?.off("notification", receiveNotif)
+		}
+	}, [receiveNotif])
 
 	useEffect(() => {
 		user(),

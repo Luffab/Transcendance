@@ -58,26 +58,6 @@ const {socket} = useSelector((state: any) => ({
 		})
 }, [])
 
-	const receiveNotif = (newMessage: string) => {
-		toast.success(newMessage, {
-			position: "bottom-right",
-			autoClose: 3000,
-			hideProgressBar: false,
-			closeOnClick: true,
-			pauseOnHover: true,
-			draggable: true,
-			progress: undefined,
-			theme: "light",
-			});
-
-	}
-	useEffect(() => {
-		socket?.on("notification", receiveNotif)
-		return () => {
-			socket?.off("notification", receiveNotif)
-		}
-	}, [receiveNotif])
-
 	function deleteWaitFriends(request: string) {
 		let tab: waitFriendDTO[]
 		tab = [];
@@ -267,6 +247,66 @@ const {socket} = useSelector((state: any) => ({
 			socket?.off("receiveFriendRequestAnswer", friendListener)
 		}
 	}, [friendListener])
+
+	const errorMessage = (newMessage: string) => {
+		toast.error(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+	}
+
+	useEffect(() => {
+		socket?.on("receiveError", errorMessage)
+		return () => {
+			socket?.off("receiveError", errorMessage)
+		}
+	}, [errorMessage])
+
+	const receiveSuccess = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("success", receiveSuccess)
+		return () => {
+			socket?.off("success", receiveSuccess)
+		}
+	}, [receiveSuccess])
+
+	const receiveNotif = (newMessage: string) => {
+		toast(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("notification", receiveNotif)
+		return () => {
+			socket?.off("notification", receiveNotif)
+		}
+	}, [receiveNotif])
 
 	const getFriends = () => {
 		let url = 'http://'+ip+':3001/api/users/friends?token='+localStorage.getItem("token_transcandence");

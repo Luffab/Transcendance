@@ -59,6 +59,27 @@ export default function Chat() {
 		}
 	}, [receiveError])
 
+	const receiveSuccess = (newMessage: string) => {
+		setShow({status:true, msg:newMessage})
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+
+	}
+	useEffect(() => {
+		socket?.on("success", receiveSuccess)
+		return () => {
+			socket?.off("success", receiveSuccess)
+		}
+	}, [receiveSuccess])
+
 	useEffect(() => {
 		dispatch(
 			{

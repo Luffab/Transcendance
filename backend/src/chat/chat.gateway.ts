@@ -299,7 +299,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		let targetedSockets = this.chatService.getSocketsByUser(msg.receiverId)
 		if (targetedSockets) {
 			this.server.to(targetedSockets).emit('newDirectMessage', messageToSend);
-			this.server.to(targetedSockets).emit('notification', newMessage.author + " : " + newMessage.content);
+			this.server.to(targetedSockets).emit('notification', username + " : " + newMessage.content);
 		}
 		if(senderSockets)
 			this.server.to(senderSockets).emit('newDirectMessage', messageToSend);
