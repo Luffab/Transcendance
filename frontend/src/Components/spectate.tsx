@@ -165,6 +165,8 @@ export default function Spectate() {
 			theme: "light",
 			});
 	}
+	if (canvasRef.current)
+			canvas = canvasRef.current;
 
 	useEffect(() => {
 		socket?.on("winTransfer", endGame)

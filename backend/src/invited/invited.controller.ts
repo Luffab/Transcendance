@@ -13,8 +13,6 @@ export class InvitedController {
 
 	@Get('login')
 	async login(@Query() query: { username: string }, @Res() res) {
-		console.log("invited username = ", query.username)
-		
 		let jwt = require('jwt-simple');
 		let secret = process.env.JWT_SECRET;
 		let payload = {
@@ -32,7 +30,6 @@ export class InvitedController {
 			payload.ft_id = await this.invitedService.getUserId(query.username)
 		let token = jwt.encode(payload, secret);
 		res.redirect(process.env.FT_REDIRECT_URL + "?jwt=" + token + "&tfa=false");
-		console.log("jwt = ", token)
 		return {"jwt": token, "tfa":false}
 	}
 

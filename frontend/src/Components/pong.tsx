@@ -37,7 +37,9 @@ export default function Pong() {
 					actual_page: "pong"
 				})
 		}, [])
-	var [is_playing, setIsPlaying] = useState(false)
+	let is_playing = false
+	const [isclick, setIsClick] = useState(false)
+	//let isclick = true
 
 
 	var canvasRef = useRef<HTMLCanvasElement>(null);
@@ -123,13 +125,16 @@ export default function Pong() {
 			context.stroke();
 			
 			// Draw players
-			context.fillStyle = 'white';
 			if (game.side.value === "left") {
+				context.fillStyle = '#67FF49';
 				context.fillRect(0, game.player.y, PLAYER_WIDTH, PLAYER_HEIGHT);
+				context.fillStyle = 'red';
 				context.fillRect(canvas.width - PLAYER_WIDTH, player2Y, PLAYER_WIDTH, PLAYER_HEIGHT);
 			}
 			else if (game.side.value === "right") {
+				context.fillStyle = 'red';
 				context.fillRect(0, player2Y, PLAYER_WIDTH, PLAYER_HEIGHT);
+				context.fillStyle = '#67FF49';
 				context.fillRect(canvas.width - PLAYER_WIDTH, game.player.y, PLAYER_WIDTH, PLAYER_HEIGHT);
 			}
 		
@@ -303,19 +308,19 @@ export default function Pong() {
 			game.side.value = "right"
 	}
 
-	function canplay () {
+	const canplay = () => {
 		if (canvasRef.current)
 			canvas = canvasRef.current;
-		reset()
-
 		// Mouse click event
 		if (is_playing === false) {
+			reset()
 			let details = {
 				jwt: localStorage.getItem("token_transcandence"),
 				socketId: socket.id
 			}
 			socket?.emit("tryToPlay", details)
 			socket?.on("rightOrLeft", whichSide)
+			is_playing = true
 		}
 	}
 
@@ -339,23 +344,41 @@ export default function Pong() {
 		}
 	}, [errorPrivate])
 
+	const cGood = (newMessage: string) => {
+		toast.success(newMessage, {
+			position: "bottom-right",
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: "light",
+			});
+	}
+
+	useEffect(() => {
+		socket?.on("matchOK", cGood)
+		return () => {
+			socket?.off("matchOK", cGood)
+		}
+	}, [cGood])
+
 
     return (
 	<>
-	{
 		<div style={{textAlign: "center", marginTop: "10%"}}>
 				<h2>
 					<span id="player1-name">Joueur 1</span> {' '}
 					[ {' '}<span id="player-score">0</span> | <span id="player2-score">0</span>{' '}]{' '}<span id="player2-name">Joueur 2</span>
 				</h2>
-   				<ul style={{listStyle: "none"}}>
-					<li>
-            			<button id="start-game" className="btn btn-primary" onClick={canplay}>Demarrer</button>
-        			</li>
-    			</ul>
+   						<ul style={{listStyle: "none"}}>
+							<li>
+            					<button id="start-game" className="btn btn-primary" onClick={()=>{canplay()}}>Demarrer</button>
+        					</li>
+    					</ul>
     		<canvas id="canvas" width={900} height={450} style={{width: "50%", height: "50%"}} ref={canvasRef}></canvas>
 		</div>
-	}
 	<ToastContainer
 			position="bottom-right"
 			autoClose={3000}

@@ -201,7 +201,6 @@ export class GameService {
 	}
 
 	movePlayer(i: number, movement: string, player: string) {
-		//console.log(player + " is moving " + movement + " in game[" + i + "]")
 		if (player === "player1") {
 			if (movement === "ArrowUp")
 				this.gameArray[i].p1Y -= 4
@@ -215,66 +214,6 @@ export class GameService {
 				this.gameArray[i].p2Y += 4
 		}
 	}
-
-	
-
-	//keepPlaying() {
-	//	this.keepPlaying()
-	//	if (this.gameArray[i].state === "on") {
-	//		this.moveBall(i)
-	//		let dataToP1 = {
-	//			"pY": this.gameArray[i].p2Y,
-	//			"ballX": this.gameArray[i].ballX,
-	//			"ballY": this.gameArray[i].ballY,
-	//			"ballR": this.gameArray[i].ballR,
-	//			"p1Score": this.gameArray[i].p1Score,
-	//			"p2Score": this.gameArray[i].p2Score
-	//		}
-	//		let dataToP2 = {
-	//			"pY": this.gameArray[i].p1Y,
-	//			"ballX": this.gameArray[i].ballX,
-	//			"ballY": this.gameArray[i].ballY,
-	//			"ballR": this.gameArray[i].ballR,
-	//			"p1Score": this.gameArray[i].p1Score,
-	//			"p2Score": this.gameArray[i].p2Score
-	//		}
-	//		//console.log("p1Y: ", this.p1Y, "p2Y: ", this.p2Y)
-	//		this.server.to(p1Socket).emit("dataTransfer", dataToP1)
-	//		//console.log("datatop1 = ", dataToP1)
-	//		this.server.to(p2Socket).emit("dataTransfer", dataToP2)
-	//		//setTimeout(this.keepPlaying, 1, p1Socket, p2Socket)
-	//	}
-	//	else if (this.gameArray[i].state === "toBeStopped") {
-	//		console.log("stopped = ", this.gameArray[i].state)
-	//		clearInterval(this.interval)
-	//		this.gameArray.splice(i, 1)
-	//		console.log
-	//	}
-	//	else if (this.gameArray[i].state === "finished") {
-	//		//this.server.to().emit("gameFinished", data)
-	//		clearInterval(this.interval)
-	//		this.isInGameSetter(this.gameArray[i].player1, false)
-	//		this.isInGameSetter(this.gameArray[i].player2, false)
-	//		this.gameArray.splice(i, 1)
-	//		console.log("--------------------|--------------------| GameGateway: keepPlaying: all games when game is finished:")
-	//		console.log(this.gameArray)
-	//	}
-	//}
-
-	//--------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------
-
-	//startGame(socket1: string, socket2: string) {
-	//	this.reset()
-	//	this.play()
-	//}
 
 	getEndGameDataWhenP1Won(i: number) {
 		let json = {
@@ -471,9 +410,6 @@ export class GameService {
 	}
 
 	areGamesFull() {
-		//if (this.getFirstAvailableGameIndex() === -1)
-		//	return true
-		//return false
 		for (let i = 0; i < this.gameArray.length; i++) {
 			if (this.gameArray[i].state === "waiting")
 				return false
@@ -490,10 +426,7 @@ export class GameService {
 	}
 
 	getGameIdFromIndex(i: number) {
-		//let i = this.getGameIndexFromSocket(socketId)
-		//if (i != -1)
 		return this.gameArray[i].id
-		//return -1
 	}
 
 	getGameIdFromSocket(socketId: string) {
@@ -566,8 +499,6 @@ export class GameService {
 			this.gameArray.splice(i, 1)
 		}
 		else if (this.gameArray[i].state == "on") {
-			//this.isInGame.set(this.gameArray[i].player1, false)
-			//this.isInGame.set(this.gameArray[i].player2, false)
 			this.isInGame.delete(this.gameArray[i].player1)
 			this.isInGame.delete(this.gameArray[i].player2)
 			this.gameArray[i].state = "toBeStopped"
@@ -580,16 +511,9 @@ export class GameService {
 				this.gameArray[i].leavingPlayer = this.gameArray[i].player2
 			}
 		}
-			//this.gameArray[i].state = "crashed"
-			//this.gameArray.splice(i, 1)
-		//else
-		//	console.log("--------------------|--------------------| GameService: deleteGame: " + socketId + " is not in game. No need to delete game")
-		//console.log("--------------------|--------------------| GameService: deleteGame: all games:")
-		//console.log(this.gameArray)
 	}
 
 	async joinGame(userId: string, socketId: string) {
-		//console.log("--------------------|--------------------| GameService: joinGame: game joined:")
 		let p2name = await this.getUsernameById(userId)
 		if (typeof(p2name) != "string")
 			return "error"
@@ -683,8 +607,10 @@ export class GameService {
 
 	getGameIndexFromUserId(userId: string) {
 		for (let i = 0; i < this.gameArray.length; i++) {
-			if (this.gameArray[i].player1 === userId || this.gameArray[i].player2 === userId)
-				return i
+			if (this.gameArray[i].player1 === userId || this.gameArray[i].player2 === userId) {
+				if (this.gameArray[i].state === "on")
+					return i
+			}
 		}
 		return -1
 	}
@@ -755,7 +681,6 @@ export class GameService {
 	}
 
 	joinPrivateGame(invitedId: string, invitedSocketId: string, ownerId: string) {
-		//console.log("--------------------|--------------------| GameService: joinGame: game joined:")
 		let i = this.getPrivateGameIndex(ownerId, invitedId)
 		if (i === -1)
 			return
@@ -871,8 +796,6 @@ export class GameService {
 	}
  
 	async createGame(userId: string, socketId: string) {
-		//console.log("--------------------|--------------------| GameService: createGame: new game:")
-		
 		let username = await this.getUsernameById(userId)
 		if (typeof(username) != "string")
 			return "error"

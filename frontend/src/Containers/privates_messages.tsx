@@ -192,11 +192,9 @@ export default function Groups_messages() {
 							return (
 								<div key={i} className="row" onClick={()=> {click_on_discussions(i)}}>
 										<div className="col">
-											<div className="card" style={{backgroundColor: selected_discussion_id === i ? "blue" : "white"}}>
+											<div className="card" style={selected_discussion_id === i ? {backgroundColor: "#0d6efd", color:"white"} : {}}>
 												<div className="card-body">
 													<h5 className="card-title">{discussion.other_user_name}</h5>
-													<h6 className="card-subtitle mb-2 text-muted">nb_unread_msg</h6>
-													<p className="card-text">last_msg</p>
 												</div>
 											</div>
 										</div>

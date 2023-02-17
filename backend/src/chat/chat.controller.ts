@@ -12,12 +12,12 @@ export class ChatController {
 	async getChannels(@Query() query: { token: string }) {
 		let decoded = await this.chatService.validateUser(query.token)
 		if (decoded === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (!decoded)
-			throw new HttpException('Error: You are not authentified.', 500)
+			throw new HttpException('Error: You are not authentified.', 400)
 		let ret = await this.chatService.getAllChannels(decoded.ft_id);
 		if (ret === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		return ret
 	}
 
@@ -25,12 +25,12 @@ export class ChatController {
 	async getUsersForDMS(@Query() query: { token: string }) {
 		let decoded = await this.chatService.validateUser(query.token)
 		if (decoded === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (!decoded)
-			throw new HttpException('Error: You are not authentified.', 500)
+			throw new HttpException('Error: You are not authentified.', 400)
 		let usersToReturn = await this.chatService.getUsersForDMS(decoded.ft_id)
 		if (usersToReturn === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		return usersToReturn;
 	}
 
@@ -38,20 +38,20 @@ export class ChatController {
 	async getDirectMessages(@Query() query: { token: string, discussionId: number }) {
 		let decoded = await this.chatService.validateUser(query.token)
 		if (decoded === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (!decoded)
-			throw new HttpException('Error: You are not authentified.', 500)
+			throw new HttpException('Error: You are not authentified.', 400)
 		if (await this.chatService.discussionExists(query.discussionId) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.discussionExists(query.discussionId) === false)
-			throw new HttpException("Error: Private discussion does not exist.", 500)
+			throw new HttpException("Error: Private discussion does not exist.", 400)
 		if (await this.chatService.isInDiscussion(decoded.ft_id, query.discussionId) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.isInDiscussion(decoded.ft_id, query.discussionId) === false)
-			throw new HttpException("Error: You are not part of that discussion.", 500)
+			throw new HttpException("Error: You are not part of that discussion.", 400)
 		let ret = await this.chatService.getDirectMessages(query.discussionId);
 		if (ret === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		return ret
 	}
 
@@ -59,12 +59,12 @@ export class ChatController {
 	async getDiscussions(@Query() query: { token: string }) {
 		let decoded = await this.chatService.validateUser(query.token)
 		if (decoded === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (!decoded)
-			throw new HttpException('Error: You are not authentified.', 500)
+			throw new HttpException('Error: You are not authentified.', 400)
 		let ret = await this.chatService.getDiscussions(decoded.ft_id);
 		if (ret === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		return ret
 	}
 
@@ -72,29 +72,29 @@ export class ChatController {
 	async getUsersInChan(@Query() query: { token: string, channel_id: number }) {
 		let decoded = await this.chatService.validateUser(query.token)
 		if (decoded === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (!decoded)
-			throw new HttpException('Error: You are not authentified.', 500)
+			throw new HttpException('Error: You are not authentified.', 400)
 		if (await this.chatService.channelExists(query.channel_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.channelExists(query.channel_id) === false)
-			throw new HttpException('Error: Channel does not exist.', 500)
+			throw new HttpException('Error: Channel does not exist.', 400)
 		if (await this.chatService.isUserInChan(decoded.ft_id, query.channel_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.isUserInChan(decoded.ft_id, query.channel_id) === false)
-			throw new HttpException('Error: You are not in this channel.', 500)
+			throw new HttpException('Error: You are not in this channel.', 400)
 		if (await this.chatService.isBannedInChan(decoded.ft_id, query.channel_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.isBannedInChan(decoded.ft_id, query.channel_id) === true)
-			throw new HttpException('Error: You are banned from this channel.', 500)
+			throw new HttpException('Error: You are banned from this channel.', 400)
 		let inChan
 		if ((inChan = await this.chatService.getUsersInChan(query.channel_id)) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		let usersToReturn = []
 		for (let i = 0; i < inChan.length; i++) {
 			let username = await this.chatService.getUsernameById(inChan[i].user_id)
 			if (typeof(username) != "string")
-				throw new HttpException('Error: Wrong data types.', 500)
+				throw new HttpException('Error: Wrong data types.', 400)
 			if (inChan[i].user_id != decoded.ft_id) {
 				let json = {
 					"ft_id": inChan[i].user_id,
@@ -114,32 +114,32 @@ export class ChatController {
 	async getUsersNotInchan(@Query() query: { token: string, channel_id: number }) {
 		let decoded = await this.chatService.validateUser(query.token)
 		if (decoded === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (!decoded)
-			throw new HttpException('Error: You are not authentified.', 500)
+			throw new HttpException('Error: You are not authentified.', 400)
 		if (await this.chatService.channelExists(query.channel_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.channelExists(query.channel_id) === false)
-			throw new HttpException('Error: Channel does not exist.', 500)
+			throw new HttpException('Error: Channel does not exist.', 400)
 		if (await this.chatService.isAdmin(decoded.ft_id, query.channel_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.isAdmin(decoded.ft_id, query.channel_id) === false)
-			throw new HttpException('Error: You are not admin in this channel.', 500)
+			throw new HttpException('Error: You are not admin in this channel.', 400)
 		if (await this.chatService.isBannedInChan(decoded.ft_id, query.channel_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.isBannedInChan(decoded.ft_id, query.channel_id) === true)
-			throw new HttpException('Error: You are banned from this channel.', 500)
+			throw new HttpException('Error: You are banned from this channel.', 400)
 		let notInChan
 		if ((notInChan = await this.chatService.getUsersNotInChan(query.channel_id)) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		let usersToReturn = []
 		for (let i = 0; i < notInChan.length; i++) {
 			let isInvited = await this.chatService.isInvitedToChan(notInChan[i], query.channel_id)
 			if (isInvited === "error")
-				throw new HttpException('Error: Wrong data types.', 500)
+				throw new HttpException('Error: Wrong data types.', 400)
 			let username = await this.chatService.getUsernameById(notInChan[i])
 			if (typeof(username) != "string")
-				throw new HttpException('Error: Wrong data types.', 500)
+				throw new HttpException('Error: Wrong data types.', 400)
 			let json = {
 				"ft_id": notInChan[i],
 				"username": username,
@@ -155,24 +155,24 @@ export class ChatController {
 	async getChanMsg(@Query() query: { token: string, chan_id: number }) {
 		let decoded = await this.chatService.validateUser(query.token)
 		if (decoded === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (!decoded)
-			throw new HttpException('Error: You are not authentified.', 500)
+			throw new HttpException('Error: You are not authentified.', 400)
 		if (await this.chatService.channelExists(query.chan_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.channelExists(query.chan_id) === false)
-			throw new HttpException('Error: Channel does not exist.', 500)
+			throw new HttpException('Error: Channel does not exist.', 400)
 		if (await this.chatService.isUserInChan(decoded.ft_id, query.chan_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.isUserInChan(decoded.ft_id, query.chan_id) === false)
-			throw new HttpException('Error: You are not in this channel.', 500)
+			throw new HttpException('Error: You are not in this channel.', 400)
 		if (await this.chatService.isBannedInChan(decoded.ft_id, query.chan_id) === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		if (await this.chatService.isBannedInChan(decoded.ft_id, query.chan_id) === true)
-			throw new HttpException('Error: You are banned from this channel.', 500)
+			throw new HttpException('Error: You are banned from this channel.', 400)
 		let msgs =  await this.chatService.getChanMsg(decoded.ft_id, query.chan_id)
 		if (msgs === "error")
-			throw new HttpException('Error: Wrong data types.', 500)
+			throw new HttpException('Error: Wrong data types.', 400)
 		return msgs
 	}
 }

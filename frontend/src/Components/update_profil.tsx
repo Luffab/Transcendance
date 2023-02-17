@@ -294,7 +294,7 @@ export default function Update_Profil() {
 		}
 		)
 		.then(response => {
-			setTfa(response.data.is2fa)
+			setTfa(response.data)
 		})
 		.catch((error) =>{
 			toast.error(error.response.data.message, {
@@ -416,7 +416,7 @@ export default function Update_Profil() {
         			    <input className="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" defaultChecked={tfa} onClick={() => change2fa(!tfa)} style={{height: "20px", width: "50px"}}/>
        				</div>
 				</div>
-			) ||
+			) || recup_email && !ismail &&
 			(
 				<h4>Pour pouvoir activer la 2fa, entrez une adresse mail ci-dessus</h4>
 			)

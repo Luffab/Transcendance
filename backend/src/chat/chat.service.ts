@@ -209,16 +209,6 @@ export class ChatService {
 		}
 	}
 
-	//async showSockets() {
-	//	for (let [key, value] of this.socketByUser) {
-	//		let username = await this.getUsernameById(key)
-	//		if (typeof(username) != "string")
-	//				return "error"
-	//		let status = await this.getStatusById(key)
-	//		console.log(username + " is " + status + " = " + value);
-	//	}
-	//}
-
 	async setOnlineStatus(userId: string) {
 		try {
 			await this.userRepo
@@ -390,13 +380,8 @@ export class ChatService {
 			let unmute_time = await this.userinchanRepo.findOne({
 				select: {unmute_time: true},
 				where: { chanid: chanId, user_id: userId }})
-			console.log("unmute time = ", unmute_time.unmute_time)
-			console.log("unmute time in seconds = ", unmute_time.unmute_time/1000)
-			if (unmute_time.unmute_time > (now/1000)) {
-				console.log("is muted")
+			if (unmute_time.unmute_time > (now/1000))
 				return true
-			}
-			console.log("is not muted")
 			return false
 		}
 		catch {return "error"}
@@ -576,17 +561,14 @@ export class ChatService {
 					{ channel_type: "password"}
 				]
 			});
-			//console.log("public and password channels ids = ", publicAndPwdChannelsIds)
 			let privateChannelsIds = await this.chanRepo.find({
 				select: {id: true},
 				where: { channel_type: "private"}
 			});
-			//console.log("private channels ids = ", privateChannelsIds)
 			let joinedChannelsIds = await this.userinchanRepo.find({
 				select: {chanid: true},
 				where: { user_id: userId }
 			})
-			//console.log("joined channels ids = ", joinedChannelsIds)
 			let joinedPrivateChannelsIds = []
 			for (let i = 0; i < privateChannelsIds.length; i++) {
 				for (let j = 0; j < joinedChannelsIds.length; j++) {
@@ -594,7 +576,6 @@ export class ChatService {
 						joinedPrivateChannelsIds.push(privateChannelsIds[i])
 				}
 			}
-			//console.log("joined private channels ids = ", joinedPrivateChannelsIds)
 			let pendingInvitations
 			if ((pendingInvitations = await this.getPendingChanInvitations(userId)) === "error")
 				return "error"
@@ -605,9 +586,7 @@ export class ChatService {
 					pendingIds.push(privateChannelsIds[i])
 				}
 			}
-			//console.log("pending channels ids = ",pendingIds)
 			let finalIds = [...publicAndPwdChannelsIds, ...joinedPrivateChannelsIds, ...pendingIds]
-			//console.log("final channels ids = ", finalIds)
 			let finalChannels = []
 			for (let i = 0; i < finalIds.length; i++) {
 				let tmp
@@ -615,7 +594,6 @@ export class ChatService {
 					return "error"
 				finalChannels[i] = tmp
 			}
-			//console.log("ALL CHANNELS :", finalChannels)
 			let completedChannels = []
 			for (let i = 0; i < finalChannels.length; i++) {
 				let isInChan = await this.isUserInChan(userId, finalChannels[i].id)
@@ -645,7 +623,6 @@ export class ChatService {
 					})
 				}
 			}
-			//console.log(completedChannels)
 			return completedChannels;
 		}
 		catch {return "error"}
@@ -701,7 +678,6 @@ export class ChatService {
 		try {
 			let usersNotInChan = []
 		let allUsers = await this.userRepo.find()
-		console.log(allUsers)
 		for (let i = 0; i < allUsers.length; i++) {
 			let isInChan = await this.isUserInChan(allUsers[i].ft_id, chanId)
 			if (isInChan === "error")
@@ -775,22 +751,6 @@ export class ChatService {
 		}
 		catch {return "error"}
 	}
-
-	//async deletechannel(chan: DeleteChanDTO) {
-	//	try {
-	//		
-	//	}
-	//	let usernametoken = await this.validateUser(chan.token);
-	//	if (!usernametoken)
-	//		return {status: "KO", message: "Invalid Token"}
-	//	if (await this.userinchanRepo.findOne({
-	//		where: { isowner: true, chanid: chan.chan_id, user_id: usernametoken.ft_id}
-	//	})) {
-	//		await this.chanRepo.delete({id: chan.chan_id});
-	//		return {status: "OK", message: "The channel was delete succesfully"};
-	//	}
-	//	return {status: "KO", message: "The user is not the owner of the channel"};
-	//}
 
 	async isBlockedBy(requestId: string, targetId: string) {
 		try {
@@ -895,6 +855,7 @@ export class ChatService {
 					channelType: channelToLeave.channel_type,
 					ownerLeft: true,
 				}
+				await this.chanInvitationRepo.delete({channel_id: chanId})
 				await this.userinchanRepo.delete({chanid: chanId})
 				await this.chanRepo.delete({id: chanId})
 				return ret2

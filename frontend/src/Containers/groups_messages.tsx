@@ -643,11 +643,9 @@ export default function Groups_messages() {
 								<div key={i} className="row" onClick={()=> {click_on_channels(i)}}>
 										<div className="col">
 											{/*<div className="card" style={{backgroundColor: channel.color}}>*/}
-											<div className="card" style={{backgroundColor: selected_channel_id === i ? "blue" : "white"}}>
+											<div className="card" style={selected_channel_id === i ? {backgroundColor: "#0d6efd", color:"white"} : {}}>
 												<div className="card-body">
 													<h5 className="card-title">{channel.name}</h5>
-													<h6 className="card-subtitle mb-2 text-muted">nb_unread_msg</h6>
-													<p className="card-text">last_msg</p>
 												</div>
 											</div>
 										</div>
@@ -697,7 +695,13 @@ export default function Groups_messages() {
 						selected_channel_id > -1 && channels[selected_channel_id].is_in_chan && (
 							<div className="col">
 								<button onClick={()=>{leave_channel()}} type="button" className="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modal_create_channel">
-									Quitter le channel
+									{
+										channels[selected_channel_id].is_owner && (
+											<>Supprimer le channel</>
+										) || (
+											<>Quitter le channel</>
+										)
+									}
 								</button>
 							</div>
 						)

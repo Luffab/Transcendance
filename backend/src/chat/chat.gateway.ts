@@ -78,6 +78,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@SubscribeMessage('changePassword')
 	async changePassowrd(@ConnectedSocket() socket: Socket, @MessageBody() body: ChangePswDTO) {
 		console.log("\n\n--------------------|--------------------|--------------------| CHANGE PASSWORD |--------------------|--------------------|--------------------\n")
+		console.log(body)
 		if (typeof(body.chanId) != "number" || typeof(body.password) != "string" || typeof(body.jwt) != "string")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		let decoded = await this.chatService.validateUser(body.jwt)
@@ -99,7 +100,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: User is not the owner of this channel."))
 		if (body.password.length > 0 && body.password.length < 5)
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Password should be at least 5 characters long."))
-		if (body.password.length < 20)
+		if (body.password.length > 20)
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Password should not exceed 20 characters."))
 		if (await this.chatService.changePassword(decoded.ft_id, body.chanId, body.password) === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -137,6 +138,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			for (let i = 0; i < targetedSockets.length; i++)
 				this.server.to(targetedSockets[i]).emit('updateChannel', json)
 		}
+		this.server.to(socket.id).emit("success", "Password was succesfully changed !")
 	}
 
 	@SubscribeMessage('leaveChannel')
@@ -148,7 +150,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: You are not authentified."))
+		return (this.sendErrorMessage(socket.id, "receiveError", "Error: You are not authentified."))
 		let senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
 		if (await this.chatService.channelExists(details.chanId) === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -240,11 +242,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		if (await this.chatService.isBlockedBy(details.receiverId, decoded.ft_id) === true)
 			return
-		let invitation
-		if ((invitation = await this.chatService.createGameInvitation(decoded.ft_id, details.receiverId, details.mode)) === "error")
-			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		let username = await this.chatService.getUsernameById(decoded.ft_id)
 		if (typeof(username) != "string")
+			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
+		let invitation
+		if ((invitation = await this.chatService.createGameInvitation(decoded.ft_id, details.receiverId, details.mode)) === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		let json = {
 			"sender_id": invitation.sender_id,
@@ -252,8 +254,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			"mode": details.mode
 		}
 		let targetedSockets = this.chatService.getSocketsByUser(invitation.receiver_id)
-		if (targetedSockets)
+		if (targetedSockets) {
+			this.server.to(targetedSockets).emit('notification', "You have been ivited to a game (" + json.mode + ") by " + json.sender_username + " !");
 			this.server.to(targetedSockets).emit('newGameInvitation', json);
+		}
 	}
 
 	@SubscribeMessage('sendDirectMessage')
@@ -265,7 +269,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: You are not authentified."))
+			return (this.sendErrorMessage(socket.id, "receiveError", "Error: You are not authentified."))
 		let senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
 		if (await this.chatService.discussionExists(msg.discussionId) === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -293,8 +297,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			"content": newMessage.content
 		}
 		let targetedSockets = this.chatService.getSocketsByUser(msg.receiverId)
-		if (targetedSockets)
+		if (targetedSockets) {
 			this.server.to(targetedSockets).emit('newDirectMessage', messageToSend);
+			this.server.to(targetedSockets).emit('notification', newMessage.author + " : " + newMessage.content);
+		}
 		if(senderSockets)
 			this.server.to(senderSockets).emit('newDirectMessage', messageToSend);
 	}
@@ -308,7 +314,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		if (!decoded)
-			return(console.log("Error: You are not authentified."))
+			return (this.sendErrorMessage(socket.id, "receiveError", "Error: You are not authentified."))
 		let senderSockets = this.chatService.getSocketsByUser(decoded.ft_id)
 		if (await this.chatService.discussionAlreadyExists(decoded.ft_id, details.receiverId) === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -395,6 +401,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		let ret = await this.chatService.muteUser(details.receiverId, details.chanId, details.time)
 		if (ret === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
+		let username = await this.chatService.getUsernameById(details.receiverId)
+		this.server.to(socket.id).emit("success", username + " was successfully muted for " + details.time + " minute(s) !")
 	}
 
 	@SubscribeMessage('banUser')
@@ -467,6 +475,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				this.server.to(targetedSockets[i]).emit('updateUserInChan', json);
 			}
 		}
+		this.server.to(socket.id).emit("success", username + " was successfully banned !")
 	}
 
 	@SubscribeMessage('unbanUser')
@@ -563,6 +572,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				this.server.to(targetedSockets[i]).emit('updateUserInChan', json);
 			}
 		}
+		this.server.to(socket.id).emit("success", username + " was successfully unbanned !")
 	}
 
 	@SubscribeMessage('giveAdminRole')
@@ -650,7 +660,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				"color": "none"
 			}
 			this.server.to(newAdminSockets).emit('updateChannel', json);
+			this.server.to(newAdminSockets).emit('notification',  "You are now admin in this channel : " + chanName);
 		}
+		this.server.to(socket.id).emit("success", username + " is now an admin in this channel !")
 	}
 
 	@SubscribeMessage('declineChannelInvitation')
@@ -863,6 +875,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			}
 			if (targetedSockets)
 				this.server.to(targetedSockets).emit('receiveFriendRequest', json)
+				this.server.to(targetedSockets).emit('notification', username + " wants to be your friend !")
 		}
 	}
 
@@ -950,11 +963,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				username: username,
 				status: status
 			}
-			if (targetedSockets)
-				this.server.to(targetedSockets).emit('receiveFriendRequestAnswer', json)
 			let sendeUsername = await this.chatService.getUsernameById(details.friend_id)
 			if (typeof(sendeUsername) != "string")
 				return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
+			if (targetedSockets) {
+				this.server.to(targetedSockets).emit('receiveFriendRequestAnswer', json)
+				this.server.to(targetedSockets).emit('notification', username + " accepted your friend request !")
+			}	
 			let status2 = await this.chatService.getStatusById(details.friend_id)
 			if (status2 === "error")
 				return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -1018,6 +1033,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		if (await this.chatService.isAlreadyInvitedBy(decoded.ft_id, details.receiverId, details.chanId) === true)
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: You already have invited this user."))
+		let username = await this.chatService.getUsernameById(decoded.ft_id)
+		if (typeof(username) != "string")
+			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
 		let channelInvitation
 		if ((channelInvitation = await this.chatService.createChannelInvitation(decoded.ft_id, details.receiverId, details.chanId)) === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -1041,8 +1059,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			"is_in_chan": false
 		}
 		let targetedSockets = this.chatService.getSocketsByUser(channelInvitation.receiver_id)
-		if (targetedSockets)
+		if (targetedSockets) {
+			this.server.to(targetedSockets).emit('notification', username + " has invited you to a private channel : " + chanName + " !")
 			this.server.to(targetedSockets).emit('emitChannelInvitation', json)
+		}
 	}
 
 	@SubscribeMessage('messageEmitted')
@@ -1135,18 +1155,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		//console.log("\n\n--------------------|--------------------|--------------------| NEW SOCKET CONNECTION |--------------------|--------------------|--------------------\n")
 		//console.log("--------------------|--------------------| ChatGateway: handleConnection: new socket id:", client.id)
 		if (client.handshake.query.jwt === "null")
-			return (this.sendErrorMessage(client.id, "receiveErrorGlobal", "Error: No token provided."))
+			return (this.sendErrorMessage(client.id, "receiveError", "Error: No token provided."))
 		if (client.handshake.query.jwt) {
 			let token = client.handshake.query.jwt.toString()
 			let decoded = await this.chatService.validateUser(token)
 			if (decoded === "error")
-				return (this.sendErrorMessage(client.id, "receiveErrorGlobal", "Error: Wrong data types."))
+				return (this.sendErrorMessage(client.id, "receiveError", "Error: Wrong data types."))
 			if (!decoded)
-				return (this.sendErrorMessage(client.id, "receiveErrorGlobal", "Error: You are not authentified."))
+				return (this.sendErrorMessage(client.id, "receiveError", "Error: You are not authentified."))
 			this.chatService.addSocketToUser(decoded.ft_id, client.id)
 			let ret = await this.chatService.setOnlineStatus(decoded.ft_id)
 			if (ret === "error")
-				return (this.sendErrorMessage(client.id, "receiveErrorGlobal", "Error: Wrong data types."))
+				return (this.sendErrorMessage(client.id, "receiveError", "Error: Wrong data types."))
 		}
 	}
 
