@@ -631,6 +631,17 @@ export default function Groups_messages() {
 			}
 			socket?.emit("changePassword", message)
 		}
+		const set_disabled_user_after_invit = (user_ft_id:string) => {
+			let tmp_users = []
+			let tmp_user = null
+			users_not_in_this_chan.map((user_not_in_this_chan: UsersNotInChanDTO, i:number)=>{
+				tmp_user = user_not_in_this_chan
+				if (user_not_in_this_chan.ft_id === user_ft_id)
+					tmp_user.is_invited = true
+				tmp_users.push(tmp_user)
+			})
+			setGet_users_not_in_this_chan(tmp_users)
+		}
 		return (
 			<>
 			<div className="row">
@@ -892,7 +903,7 @@ export default function Groups_messages() {
 								<div className="ms-2 me-auto">
 								<div className="fw-bold">{user.username}</div>
 								</div>
-								<Button variant="primary" disabled={user.is_invited ? true : false} onClick={()=>{sendInvitation_private_channel(user.ft_id)}}>Ajouter</Button>
+								<Button variant="primary" disabled={user.is_invited ? true : false} onClick={()=>{set_disabled_user_after_invit(user.ft_id);sendInvitation_private_channel(user.ft_id)}}>Ajouter</Button>
 							</ListGroup.Item>
 						)
 					})
