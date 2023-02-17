@@ -18,7 +18,7 @@ export class User{
 	@Column({ name: 'refresh_token' })
 	refreshToken: string;
 
-	@Column({ name: 'emails', nullable: true })
+	@Column({nullable: true })
 	recup_emails: string;
 
 	@Column({nullable: true})

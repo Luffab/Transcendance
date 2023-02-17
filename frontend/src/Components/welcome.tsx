@@ -82,43 +82,26 @@ const {ip} = useSelector((state: any) => ({
     )
     .then(response => {
       setCode_tfa("")
-      if (response.data.status === "KO")
-      {
-        toast.error(response.data.message, {
-          position: "bottom-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-          });
-      }
-      else if (response.data.status === "OK")
-      {
         dispatch(
           {
             type:"TOKEN",
-            token: response.data.token
+            token: response.data
           })
-          localStorage.setItem("token_transcandence", response.data.token)
-        navigate("/home")
-      }
-
-    })
-    .catch((error) =>{
-			toast.error(error.response.data.message, {
-				position: "bottom-right",
-				autoClose: 3000,
-				hideProgressBar: false,
-				closeOnClick: true,
-				pauseOnHover: true,
-				draggable: true,
-				progress: undefined,
-				theme: "light",
-				});
-		})
+          localStorage.setItem("token_transcandence", response.data)
+          navigate("/home")
+      })
+      .catch((error) =>{
+		  	toast.error(error.response.data.message, {
+		  		position: "bottom-right",
+		  		autoClose: 3000,
+		  		hideProgressBar: false,
+		  		closeOnClick: true,
+		  		pauseOnHover: true,
+		  		draggable: true,
+		  		progress: undefined,
+		  		theme: "light",
+		  		});
+		  })
   }
 
   const send_recup_code = () => {
@@ -127,7 +110,6 @@ const {ip} = useSelector((state: any) => ({
       "token": token_tfa,
       "email": recup
     }).then((data) => {
-
     })
     .catch((error) =>{
 			toast.error(error.response.data.message, {
