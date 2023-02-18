@@ -75,11 +75,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				self.server.to(self.gameService.getSpectatorsSockets(i)).emit("dataTransfer", self.gameService.getDataForSpecs(i))
 		}
 		else if (self.gameService.getGameState(i) === "toBeStopped") {
-			console.log("keepPkaying: ame[" + i + "] state = ", self.gameService.getGameState(i))
+			
 			let gameId = self.gameService.getGameIdFromIndex(i)
 			let leaver = self.gameService.getLeaver(i);
 			if (leaver === self.gameService.getPlayer1(i)) {
-				console.log("PLAYER 1 STOPPED")
+				
 				let data1 = self.gameService.getUpdateDTO(p2, true, false)
 				let data2 = self.gameService.getUpdateDTO(p1, false, true)
 				let his1 = self.gameService.getGameHistoryDTO(p2, true, 0, 3, p1)
@@ -95,7 +95,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				}
 			}
 			if (leaver === self.gameService.getPlayer2(i)) {
-				console.log("PLAYER 2 STOPPED")
+				
 				let data1 = self.gameService.getUpdateDTO(p1, true, false)
 				let data2 = self.gameService.getUpdateDTO(p2, false, true)
 				let his1 = self.gameService.getGameHistoryDTO(p1, true, 3, 0, p2)
@@ -114,7 +114,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			self.gameService.finishGame(i)
 		}
 		else if (self.gameService.getGameState(i) === "finished") {
-			console.log("keepPlaying: game[" + i + "] state = ", self.gameService.getGameState(i))
+			
 			let gameId = self.gameService.getGameIdFromIndex(i)
 			let p1s = self.gameService.getP1Score(i)
 				let p2s = self.gameService.getP2Score(i)
@@ -131,7 +131,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				self.server.to(p1Socket).emit("winTransfer", data)
 				self.server.to(p2Socket).emit("winTransfer", data)
 				if (self.gameService.hasSpectators(i) === true) {
-					console.log("PLAYER1 WIN")
+					
 					self.server.to(self.gameService.getSpectatorsSockets(i)).emit("winTransfer", "player1")
 				}
 			}
@@ -148,19 +148,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				self.server.to(p1Socket).emit("winTransfer", data)
 				self.server.to(p2Socket).emit("winTransfer", data)
 				if (self.gameService.hasSpectators(i) === true) {
-					console.log("PLAYER2 WIN")
+					
 					self.server.to(self.gameService.getSpectatorsSockets(i)).emit("winTransfer", "player2")
 				}
 			}
 			clearInterval(self.gameIntervals.get(gameId))
 			self.gameService.finishGame(i)
-			console.log("gameIntervals = ", self.gameIntervals)
+			
 		}
 	}
 
 	@SubscribeMessage('userLeft')
 	async handleBack(@ConnectedSocket() socket: Socket, @MessageBody() data: createGameDetails) {
-		console.log("\n\n--------------------|--------------------|--------------------| PLAYER BACKED |--------------------|--------------------|--------------------\n")
+		
 		let decoded = await this.gameService.validateUser(data.jwt)
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -190,7 +190,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	@SubscribeMessage('movePlayer')
 	async movePlayer(@ConnectedSocket() socket: Socket, @MessageBody() data: dataFromClient) {
-		console.log("\n\n--------------------|--------------------|--------------------| PLAYER MOVE |--------------------|--------------------|--------------------\n")
+		
 		let decoded = await this.gameService.validateUser(data.jwt)
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -205,7 +205,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	@SubscribeMessage('tryToPlay')
 	async tryToPlay(@ConnectedSocket() socket: Socket, @MessageBody() details: createGameDetails) {
-		console.log("\n\n--------------------|--------------------|--------------------| TRY TO PLAY |--------------------|--------------------|--------------------\n")
+		
 		let decoded = await this.gameService.validateUser(details.jwt)
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -213,7 +213,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: You are not authentified."))
 		if (this.gameService.isAlreadyInGame(decoded.ft_id) === true)
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: You are already in a game."))
-		console.log("details = ", details)
+		
 		if (this.gameService.areGamesFull() === true ) {
 			let ret = await this.gameService.createGame(decoded.ft_id, socket.id)
 			if (ret === "error")
@@ -237,7 +237,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	@SubscribeMessage('createPrivateGame')
 	async createPrivateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: createPrivateGameDetails) {
-		console.log("\n\n--------------------|--------------------|--------------------| CREATE PRIVATE GAME |--------------------|--------------------|--------------------\n")
+		
 		let decoded = await this.gameService.validateUser(details.jwt)
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -261,7 +261,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	@SubscribeMessage('joinPrivateGame')
 	async joinPrivateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: joinPrivateGameDetails) {
-		console.log("\n\n--------------------|--------------------|--------------------| JOIN PRIVATE GAME |--------------------|--------------------|--------------------\n")
+		
 		let decoded = await this.gameService.validateUser(details.jwt)
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -280,7 +280,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	@SubscribeMessage('readyToGame')
 	async readyToGame(@ConnectedSocket() socket: Socket, @MessageBody() details: createGameDetails) {
-		console.log("\n\n--------------------|--------------------|--------------------| READY TO GAME |--------------------|--------------------|--------------------\n")
+		
 		let decoded = await this.gameService.validateUser(details.jwt)
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -302,7 +302,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		}
 		else if (this.gameService.getGameState(i) === "waitingFor1Ready") {
 			if (this.isReady.get(decoded.ft_id) === true) {
-				console.log(decoded.ft_id + " is ready : " + this.isReady.get(decoded.ft_id))
+				
 				return (this.sendErrorMessage(socket.id, "receiveError", "Error: You are already ready."))
 			}
 			this.isReady.delete(this.gameService.getPlayer1(i))
@@ -311,7 +311,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 				this.server.to(socket.id).emit("rightOrLeft", "left")
 			else
 				this.server.to(socket.id).emit("rightOrLeft", "right")
-			console.log(decoded.ft_id + " is ready")
+			
 			let ret = await this.gameService.setPlayersStatus(i, "In Game")
 			if (ret === "error")
 				return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -331,7 +331,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	@SubscribeMessage('spectateGame')
 	async spectateGame(@ConnectedSocket() socket: Socket, @MessageBody() details: spectateGameDetails) {
-		console.log("\n\n--------------------|--------------------|--------------------| SPECTATE GAME |--------------------|--------------------|--------------------\n")
+		
 		let decoded = await this.gameService.validateUser(details.jwt)
 		if (decoded === "error")
 			return (this.sendErrorMessage(socket.id, "receiveError", "Error: Wrong data types."))
@@ -348,9 +348,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	async handleConnection(client: Socket, ...args: any[]) {
-		console.log("\n\n--------------------|--------------------|--------------------| NEW SOCKET CONNECTION |--------------------|--------------------|--------------------\n")
-		console.log("--------------------|--------------------| GameGateway: handleConnection: new socket id:")
-		console.log(client.id);
+		
+		
+		
 		if (client.handshake.query.jwt === "null")
 			return
 		if (client.handshake.query.jwt) {
@@ -364,10 +364,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	async handleDisconnect(client: Socket, ...args: any[]) {
-		console.log("\n\n--------------------|--------------------|--------------------| SOCKET DISCONNECTED |--------------------|--------------------|--------------------\n")
-		console.log("--------------------|--------------------| GameGateway: handleDisconnect: socket id disconnected:")
-		console.log(client.id)
-		console.log("jwt = ", client.handshake.query.jwt)
+		
+		
+		
+		
 		if (client.handshake.query.jwt === "null")
 			return
 		if (client.handshake.query.jwt) {

@@ -1,7 +1,7 @@
 const INITIAL_STATE = {
   token:null,
   socket:null,
-  ip:"10.64.1.154",
+  ip: window.location.hostname,
   actual_page:"",
 }
 

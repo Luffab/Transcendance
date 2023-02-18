@@ -1,24 +1,11 @@
 version: '3.8'
+
 services:
   postgres:
     image: postgres:latest
     restart: always
     env_file:
       - .env
-    #volumes: 
-    #  - db:/var/lib/postgresql/data
-    #  - ./init.sql:/docker-entrypoint-initdb.d/create_tables.sql
-  adminer:
-    image: michalhosna/adminer
-    container_name: adminer
-    restart: always
-    environment:
-      - ADMINER_DRIVER=pgsql
-      - ADMINER_SERVER=postgres
-      - ADMINER_USERNAME=${POSTGRES_USER}
-      - ADMINER_DB=${POSTGRES_DB}
-    ports:
-      - "8080:8080"
   back:
     build:
       context: ./backend
@@ -38,8 +25,3 @@ services:
      - 3000:3000
     depends_on:
      - postgres
-
-
-volumes:
-  db:
-    driver: local

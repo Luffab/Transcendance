@@ -16,7 +16,6 @@ import { GameModule } from './game/game.module';
 import Channels from './typeorm/entities/Channels';
 import Messages from './typeorm/entities/Messages';
 import UsersInChan from './typeorm/entities/UserinChan';
-import { InvitedModule } from './invited/invited.module';
 
 @Module({
   imports: [
@@ -40,7 +39,6 @@ import { InvitedModule } from './invited/invited.module';
 			ChatModule,
 			MailModule,
 			GameModule,
-			InvitedModule,
 		],
   controllers: [], 
   providers: []

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useSelector, useDispatch } from 'react-redux';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-
+import React from 'react'
 
 const MAXLENGTH_USERNAME = 20;
 const MAXLENGTH_PICTURE = 10485760;
@@ -358,7 +358,6 @@ export default function Update_Profil() {
 			const file = e.target.files[0];
 			let base64: any
 			base64 = await convertToBase64(file);
-			console.log(base64)
 			if (base64.length < MAXLENGTH_PICTURE) {
 				setTmpAvatar(avatar)
 				setAvatar(base64);

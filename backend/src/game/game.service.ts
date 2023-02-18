@@ -23,7 +23,7 @@ export class game {
 	winner: string
 	state: string
 	type: string
-	mode : string
+	mode: string
 	p1Y: number
 	p2Y: number
 	leavingPlayer: string
@@ -50,9 +50,9 @@ export class GameService {
 		@InjectRepository(UsersRelation) private readonly relationRepo: Repository<UsersRelation>,
 		@InjectRepository(GameInvitation) private readonly inviteRepo: Repository<GameInvitation>
 		//private game: Map<string, string[]>,
-	) {}
-	private isInGame: Map<string, boolean>= new Map<string, boolean>();
-	private gameArray: Array<game>= new Array<game>()
+	) { }
+	private isInGame: Map<string, boolean> = new Map<string, boolean>();
+	private gameArray: Array<game> = new Array<game>()
 
 	//gameArray = new Array()
 	//isInGame = new Map()
@@ -76,7 +76,7 @@ export class GameService {
 	//paddleWidth:number = 5
 	//maxSpeed:number = 10
 
-	stop(i: number) {	
+	stop(i: number) {
 		this.reset(i);
 		this.gameArray[i].state = "finished"
 		this.setStatus(this.gameArray[i].player1, "Online")
@@ -96,7 +96,7 @@ export class GameService {
 		this.gameArray[i].ballY = this.gameArray[i].canvasHeight / 2
 		this.gameArray[i].p1Y = this.gameArray[i].canvasHeight / 2 - this.gameArray[i].paddleHeight / 2;
 		this.gameArray[i].p2Y = this.gameArray[i].canvasHeight / 2 - this.gameArray[i].paddleHeight / 2;
-	
+
 		// Reset speed
 		this.gameArray[i].ballSpeedX = this.gameArray[i].initialSpeedX;
 		this.gameArray[i].ballSpeedY = 0;
@@ -105,7 +105,7 @@ export class GameService {
 	changeDirection(i: number, pY: number) {
 		let impact = this.gameArray[i].ballY - pY - this.gameArray[i].paddleHeight / 2;
 		let ratio = 100 / (this.gameArray[i].paddleHeight / 2);
-	
+
 		// Get a value between 0 and 10
 		this.gameArray[i].ballSpeedY = Math.round(impact * ratio / 25);
 	}
@@ -113,11 +113,11 @@ export class GameService {
 	collidePlayer1(i: number) {
 		if (this.gameArray[i].ballY < this.gameArray[i].p1Y || this.gameArray[i].ballY > this.gameArray[i].p1Y + this.gameArray[i].paddleHeight) {
 			this.reset(i)
-	
+
 			// Update score
 			this.gameArray[i].p2Score++
 			this.gameArray[i].ballSpeedX = this.gameArray[i].initialSpeedX;
-				//document.querySelector('#computer-score').textContent = game.computer.score;
+			//document.querySelector('#computer-score').textContent = game.computer.score;
 			//else {
 			//	game.player.score++;
 			//	setPlayerScore(game.player.score)
@@ -149,11 +149,11 @@ export class GameService {
 	collidePlayer2(i: number) {
 		if (this.gameArray[i].ballY < this.gameArray[i].p2Y || this.gameArray[i].ballY > this.gameArray[i].p2Y + this.gameArray[i].paddleHeight) {
 			this.reset(i)
-	
+
 			// Update score
 			this.gameArray[i].p1Score++
 			this.gameArray[i].ballSpeedX = this.gameArray[i].initialSpeedX * -1;
-				//document.querySelector('#computer-score').textContent = game.computer.score;
+			//document.querySelector('#computer-score').textContent = game.computer.score;
 			//else {
 			//	game.player.score++;
 			//	setPlayerScore(game.player.score)
@@ -189,13 +189,13 @@ export class GameService {
 		if (this.gameArray[i].ballY > this.gameArray[i].canvasHeight || this.gameArray[i].ballY < 0) {
 			this.gameArray[i].ballSpeedY *= -1;
 		}
-	
+
 		if (this.gameArray[i].ballX > this.gameArray[i].canvasWidth - this.gameArray[i].paddleWidth) {
 			this.collidePlayer2(i);
 		}
 		else if (this.gameArray[i].ballX < this.gameArray[i].paddleWidth) {
 			this.collidePlayer1(i);
-		}	
+		}
 		this.gameArray[i].ballX += this.gameArray[i].ballSpeedX;
 		this.gameArray[i].ballY += this.gameArray[i].ballSpeedY;
 	}
@@ -353,19 +353,19 @@ export class GameService {
 	}
 
 	spliceGame(i: number) {
-		console.log("game state = ", this.gameArray[i].state)
+		
 		this.gameArray.splice(i, 1)
-		console.log("game array after splice = ", this.gameArray)
-		console.log("isInGame = ", this.isInGame)
+		
+		
 	}
 
 	finishGame(i: number) {
-		console.log("game state = ", this.gameArray[i].state)
+		
 		this.isInGame.delete(this.gameArray[i].player1)
 		this.isInGame.delete(this.gameArray[i].player2)
 		this.gameArray.splice(i, 1)
-		console.log("game array after splice = ", this.gameArray)
-		console.log("isInGame = ", this.isInGame)
+		
+		
 	}
 
 	whichPlayer(socketId: string) {
@@ -393,14 +393,13 @@ export class GameService {
 		return decoded
 	}
 
-	async userExists(userId: string)
-	{
+	async userExists(userId: string) {
 		try {
-			if (await this.userRepo.findOne({ where: {ft_id: userId}}))
+			if (await this.userRepo.findOne({ where: { ft_id: userId } }))
 				return true
 			return false
 		}
-		catch {return "error"}
+		catch { return "error" }
 	}
 
 	isAlreadyInGame(userId: string) {
@@ -418,7 +417,7 @@ export class GameService {
 	}
 
 	getFirstAvailableGameIndex() {
-		for (let i = 0; i < this.gameArray.length;i++) {
+		for (let i = 0; i < this.gameArray.length; i++) {
 			if (this.gameArray[i].player2 === "")
 				return i
 		}
@@ -450,16 +449,16 @@ export class GameService {
 
 	async isBlockedBy(requestId: string, targetId: string) {
 		try {
-			if (await this.relationRepo.findOne({ where: {sender_id: requestId, receiver_id: targetId, is_block: true}}))
+			if (await this.relationRepo.findOne({ where: { sender_id: requestId, receiver_id: targetId, is_block: true } }))
 				return true
 			return false
 		}
-		catch {return "error"}
+		catch { return "error" }
 	}
 
 	removeSpectator(i: number, userId: string, socketId: string) {
-		console.log(userId + " left with socket " + socketId)
-		console.log("game[" + i + "] before splice = ", this.gameArray[i])
+		
+		
 		for (let j = 0; j < this.gameArray[i].spectators.length; j++) {
 			if (this.gameArray[i].spectators[j] === userId) {
 				this.gameArray[i].spectators.splice(j, 1)
@@ -472,13 +471,13 @@ export class GameService {
 				break
 			}
 		}
-		console.log("game[" + i + "] after splice = ", this.gameArray[i])
+		
 	}
 
 	getGameIndexFromSpecSocket(socketId: string) {
 		for (let i = 0; i < this.gameArray.length; i++) {
 			for (let j = 0; j < this.gameArray[i].specSockets.length; j++) {
-				if (this.gameArray[i].specSockets[j]=== socketId)
+				if (this.gameArray[i].specSockets[j] === socketId)
 					return i
 			}
 		}
@@ -515,7 +514,7 @@ export class GameService {
 
 	async joinGame(userId: string, socketId: string) {
 		let p2name = await this.getUsernameById(userId)
-		if (typeof(p2name) != "string")
+		if (typeof (p2name) != "string")
 			return "error"
 		let i = this.getFirstAvailableGameIndex()
 		if (i === -1)
@@ -534,7 +533,7 @@ export class GameService {
 			"winner": "unknown",
 			"state": "on",
 			"type": "public",
-			"mode" : "easy",
+			"mode": "easy",
 			"p1Y": 0,
 			"p2Y": 0,
 			"leavingPlayer": "",
@@ -554,39 +553,39 @@ export class GameService {
 		}
 		this.setStatus(this.gameArray[i].player1, "In Game")
 		this.setStatus(this.gameArray[i].player2, "In Game")
-		console.log("--------------------|--------------------| GameService: joinGame: all games:")
-		console.log(this.gameArray)
+		
+		
 		return this.gameArray[i].p1Socket
 	}
 
 	async setPlayersStatus(i: number, status: string) {
 		try {
 			await this.userRepo
-    			.createQueryBuilder()
-    			.update(User)
-    			.set({ status: status })
-    			.where("ft_id = :id", { id: this.gameArray[i].player1 })
-    			.execute()
+				.createQueryBuilder()
+				.update(User)
+				.set({ status: status })
+				.where("ft_id = :id", { id: this.gameArray[i].player1 })
+				.execute()
 			await this.userRepo
-    			.createQueryBuilder()
-    			.update(User)
-    			.set({ status: status })
-    			.where("ft_id = :id", { id: this.gameArray[i].player2 })
-    			.execute()
+				.createQueryBuilder()
+				.update(User)
+				.set({ status: status })
+				.where("ft_id = :id", { id: this.gameArray[i].player2 })
+				.execute()
 		}
-		catch {return "error"}
+		catch { return "error" }
 	}
 
 	async setStatus(userId: string, status: string) {
 		try {
 			await this.userRepo
-    			.createQueryBuilder()
-    			.update(User)
-    			.set({ status: status })
-    			.where("ft_id = :id", { id: userId })
-    			.execute()
+				.createQueryBuilder()
+				.update(User)
+				.set({ status: status })
+				.where("ft_id = :id", { id: userId })
+				.execute()
 		}
-		catch {return "error"}
+		catch { return "error" }
 	}
 
 	getGameIndexFromId(gameId: number) {
@@ -630,16 +629,16 @@ export class GameService {
 	}
 
 	printArray() {
-		console.log("My game array = ", this.gameArray)
+		
 	}
 
 	printIsInGame() {
-		console.log("Is In Game = ", this.isInGame)
+		
 	}
 
 	isAlreadySpectating(userId: string, friendId: string) {
 		let i = this.getGameIndexFromUserId(friendId)
-		console.log("game[" + i + "] = ", this.gameArray[i])
+		
 		if (i === -1)
 			return
 		for (let j = 0; j < this.gameArray[i].spectators.length; j++) {
@@ -698,7 +697,7 @@ export class GameService {
 			"winner": "unknown",
 			"state": "waitingFor2Ready",
 			"type": "private",
-			"mode" : "easy",
+			"mode": "easy",
 			"p1Y": 0,
 			"p2Y": 0,
 			"leavingPlayer": "",
@@ -716,8 +715,8 @@ export class GameService {
 			"spectators": this.gameArray[i].spectators,
 			"specSockets": this.gameArray[i].specSockets
 		}
-		console.log("--------------------|--------------------| GameService: joinPrivateGame: all games:")
-		console.log(this.gameArray)
+		
+		
 		let json = {
 			"otherSocket": this.gameArray[i].p1Socket,
 			"index": i
@@ -725,36 +724,34 @@ export class GameService {
 		return json
 	}
 
-	async getUsernameById(userId: string)
-	{
+	async getUsernameById(userId: string) {
 		try {
 			let user = await this.userRepo.findOne({
-				select: {username: true},
-				where: { ft_id: userId }})
+				select: { username: true },
+				where: { ft_id: userId }
+			})
 			return user.username
 		}
-		catch {return {status: "error"}}
+		catch { return { status: "error" } }
 	}
 
 	async createPrivateGame(ownerId: string, ownerSocketId: string, invitedId: string, mode: string) {
 		let p1name = await this.getUsernameById(ownerId)
-		if (typeof(p1name) != "string")
+		if (typeof (p1name) != "string")
 			return "error"
 		let p2name = await this.getUsernameById(invitedId)
-		if (typeof(p2name) != "string")
+		if (typeof (p2name) != "string")
 			return "error"
 		this.isInGame.set(ownerId, true)
 		let padHeight
 		let initialball
 		let maxpeed
-		if (mode === "easy")
-		{
+		if (mode === "easy") {
 			padHeight = 80
 			initialball = -2
 			maxpeed = 10
 		}
-		else if (mode === "hard")
-		{
+		else if (mode === "hard") {
 			padHeight = 40
 			initialball = -4
 			maxpeed = 20
@@ -772,7 +769,7 @@ export class GameService {
 			"winner": "unknown",
 			"state": "waitingForFriend",
 			"type": "public",
-			"mode" : mode,
+			"mode": mode,
 			"p1Y": 0,
 			"p2Y": 0,
 			"leavingPlayer": "",
@@ -791,15 +788,15 @@ export class GameService {
 			"specSockets": []
 		}
 		this.gameArray.push(json)
-		console.log("--------------------|--------------------| GameService: createPrivateGame: all games:")
-		console.log(this.gameArray)
+		
+		
 	}
- 
+
 	async createGame(userId: string, socketId: string) {
 		let username = await this.getUsernameById(userId)
-		if (typeof(username) != "string")
+		if (typeof (username) != "string")
 			return "error"
-		this.isInGame.set(userId, true)	
+		this.isInGame.set(userId, true)
 		let json = {
 			"id": this.gameCounter++,
 			"player1": userId,
@@ -813,7 +810,7 @@ export class GameService {
 			"winner": "unknown",
 			"state": "waiting",
 			"type": "public",
-			"mode" : "easy",
+			"mode": "easy",
 			"p1Y": 0,
 			"p2Y": 0,
 			"leavingPlayer": "",
@@ -832,19 +829,19 @@ export class GameService {
 			"specSockets": []
 		}
 		this.gameArray.push(json)
-		console.log("--------------------|--------------------| GameService: createGame: all games:")
-		console.log(this.gameArray)
+		
+		
 	}
 
 	async getGameInvitation(userId: string) {
 		try {
 			let game = await this.inviteRepo.find({
-				where: {receiver_id: userId}
+				where: { receiver_id: userId }
 			})
 			let tab = []
 			for (let i = 0; i < game.length; i++) {
 				let user = await this.userRepo.findOne({
-					where: {ft_id: game[i].sender_id}
+					where: { ft_id: game[i].sender_id }
 				})
 				let json = {
 					sender_username: user.username,
@@ -855,7 +852,7 @@ export class GameService {
 			}
 			return tab
 		}
-		catch {return "error"}
+		catch { return "error" }
 	}
 
 	deleteGame(i: number) {
@@ -866,18 +863,18 @@ export class GameService {
 
 	async inviteExists(senderId: string, receiverId: string) {
 		try {
-			if (await this.inviteRepo.findOne({where: {sender_id: senderId, receiver_id: receiverId}}))
+			if (await this.inviteRepo.findOne({ where: { sender_id: senderId, receiver_id: receiverId } }))
 				return true
 			return false
 		}
-		catch {return "error"}
+		catch { return "error" }
 	}
 
 	async deleteGameInvitation(senderId: string, receiverId: string) {
 		try {
-			await this.inviteRepo.delete({sender_id: senderId, receiver_id: receiverId})
+			await this.inviteRepo.delete({ sender_id: senderId, receiver_id: receiverId })
 			return
 		}
-		catch {return "error"}
+		catch { return "error" }
 	}
 }

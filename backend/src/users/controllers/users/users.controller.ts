@@ -12,24 +12,10 @@ export class UsersController {
 		  '/': 'data:image/jpeg;base64,',
 		  'i': 'data:image/png;base64,',
 		}
-		  
-		let image = new Image()
-		
 		let i = data.search(",")
-		if(!knownTypes[data[i + 1]]) {
+		if(!knownTypes[data[i + 1]])
 			return false;
-		}
-		else {
-			image.src = knownTypes[0]+data
-			image.onload = function(){
-			  //This should load the image so that you can actually check
-			  //height and width.
-			  if(image.height === 0 || image.width === 0){
-				return false;
-			  }
-		  	}
-		  return true;
-		}
+		return true;
 	}
 
 	@Post('change_avatar')

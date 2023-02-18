@@ -147,8 +147,6 @@ const {ip} = useSelector((state: any) => ({
               Se connecter avec
               <img src={logo} style={{width: "20%", marginLeft: "5px"}}/>
             </button>
-			      <input id="userInput" type="text" placeholder="Text"></input>
-		  	    <button className="btn btn-secondary" onClick={()=>invitedLogin()}>Invité</button>
           </div>
           </>
         )
