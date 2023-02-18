@@ -632,7 +632,7 @@ export default function Groups_messages() {
 			socket?.emit("changePassword", message)
 		}
 		const set_disabled_user_after_invit = (user_ft_id:string) => {
-			let tmp_users = []
+			let tmp_users: UsersNotInChanDTO[] = []
 			let tmp_user = null
 			users_not_in_this_chan.map((user_not_in_this_chan: UsersNotInChanDTO, i:number)=>{
 				tmp_user = user_not_in_this_chan
